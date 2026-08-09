@@ -10,8 +10,8 @@
 
 const IGNORED_ORG_FOLDERS = new Set(["archive", "daily"]);
 const IGNORED_STATUSES = new Set(["archived", "obsolete"]);
-// Org priority is data, not code. Real values live in _scripts/orgs.json (git-ignored);
-// _scripts/orgs.example.json is the shared template. Loaded once per run by loadOrgConfig().
+// Org priority is data, not code. Real values live in _scripts/config/orgs.json (git-ignored);
+// _scripts/config/orgs.example.json is the shared template. Loaded once per run by loadOrgConfig().
 // Empty ORG_ORDER falls back to a name-free rule (see sortOrgNames): alphabetical, personal last.
 let ORG_ORDER = [];
 const BACK_LABEL = "← Back";
@@ -287,12 +287,12 @@ function sortOrgNames(a, b) {
   return a.localeCompare(b);
 }
 
-// Best-effort load of org priority from _scripts/orgs.json (falls back to orgs.example.json, then
+// Best-effort load of org priority from _scripts/config/orgs.json (falls back to orgs.example.json, then
 // to the name-free rule in sortOrgNames). Never throws: the vault must keep working with no config.
 async function loadOrgConfig(params) {
   try {
     const { app } = env(params);
-    for (const path of ["_scripts/orgs.json", "_scripts/orgs.example.json"]) {
+    for (const path of ["_scripts/config/orgs.json", "_scripts/config/orgs.example.json"]) {
       const file = app.vault.getAbstractFileByPath(path);
       if (!file) continue;
       const parsed = JSON.parse(await app.vault.cachedRead(file));

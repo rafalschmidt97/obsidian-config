@@ -415,7 +415,7 @@
                 "id": "open-work-weekly-script-1",
                 "name": "Open Work Weekly",
                 "type": "UserScript",
-                "path": "_scripts/Open Weekly.md",
+                "path": "_scripts/quickadd/Open Weekly.md",
                 "settings": {
                   "org": "work"
                 }
@@ -437,7 +437,7 @@
                 "id": "open-personal-weekly-script-1",
                 "name": "Open Personal Weekly",
                 "type": "UserScript",
-                "path": "_scripts/Open Weekly.md",
+                "path": "_scripts/quickadd/Open Weekly.md",
                 "settings": {
                   "org": "personal"
                 }

@@ -78,7 +78,7 @@ The one thing that is genuinely per-person is the list of orgs. The scripts read
 it from a config file so no org name is hardcoded:
 
 ```bash
-cp _scripts/orgs.example.json _scripts/orgs.json
+cp _scripts/config/orgs.example.json _scripts/config/orgs.json
 # then edit orgs.json with your own orgs
 ```
 
