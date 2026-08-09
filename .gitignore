@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# obsidian-config — a showcase repo that lives INSIDE a private Obsidian vault.
+#
+# Strategy: ignore EVERYTHING, then re-include only the architecture / config
+# surface. Real notes are never tracked. Per-user or household-specific values
+# stay in git-ignored files (orgs.json, the Meal Plan template, the REST API key).
+#
+# To see exactly what is tracked:  git ls-files
+# ─────────────────────────────────────────────────────────────────────────────
+
+# 1) Ignore everything at the vault root by default.
+/*
+
+# 2) Repo meta.
+!/.gitignore
+!/README.md
+!/LICENSE
+
+# 3) The showcase surface: architecture docs, scripts, templates, global index.
+!/_obsidian_architecture/
+!/_scripts/
+!/_templates/
+!/categories.md
+
+# 3a) Keep per-user and household-specific files out of the repo.
+#     Real org priority lives here (orgs.example.json ships instead).
+/_scripts/orgs.json
+#     Real household meal-plan placement lives here (mealplan.example.json ships instead).
+/_scripts/mealplan.json
+#     The Meal Plan template hardcodes a real household project + names.
+/_templates/Meal Plan.md
+
+# 4) Structure placeholders only. No notes inside these dirs are ever tracked.
+!/daily/
+!/personal/
+!/archive/
+/daily/*
+!/daily/.gitkeep
+/personal/*
+!/personal/.gitkeep
+/archive/*
+!/archive/.gitkeep
+
+# 5) Curated Obsidian config. You must un-ignore each parent dir to descend.
+!/.obsidian/
+/.obsidian/*
+!/.obsidian/app.json
+!/.obsidian/appearance.json
+!/.obsidian/community-plugins.json
+!/.obsidian/core-plugins.json
+!/.obsidian/hotkeys.example.json
+!/.obsidian/graph.json
+!/.obsidian/page-preview.json
+!/.obsidian/backlink.json
+!/.obsidian/daily-notes.json
+!/.obsidian/templates.json
+!/.obsidian/types.json
+!/.obsidian/snippets/
+!/.obsidian/plugins/
+/.obsidian/plugins/*
+!/.obsidian/plugins/quickadd/
+/.obsidian/plugins/quickadd/*
+!/.obsidian/plugins/quickadd/data.example.json
+!/.obsidian/plugins/omnisearch/
+/.obsidian/plugins/omnisearch/*
+!/.obsidian/plugins/omnisearch/data.json
+
+# Everything else under .obsidian stays private by omission:
+#   workspace*.json (device state), obsidian-local-rest-api (keys + certs),
+#   text-extractor/cache (OCR of private docs), various-complements (dictionary
+#   built from private notes), templater-obsidian & notebook-navigator (settings
+#   full of real folder paths), and all plugin binaries.
+#   hotkeys.json and quickadd/data.json are also kept private because they carry
+#   real org names in choice IDs; scrubbed *.example.json copies ship instead.
+
+# 6) Belt-and-suspenders: never track these even if a rule above is loosened.
+.DS_Store
+**/.DS_Store
+/.trash/
+/.claude/

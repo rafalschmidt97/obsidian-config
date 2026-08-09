@@ -1,0 +1,9 @@
+.is-unresolved {
+  color: #ff4d4f !important;
+  text-decoration: underline wavy !important;
+  opacity: 0.9;
+}
+
+.is-unresolved:hover {
+  background-color: rgba(255, 77, 79, 0.12);
+}

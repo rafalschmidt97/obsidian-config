@@ -1,0 +1,8 @@
+{
+  "showRibbon": true,
+  "enabledCssSnippets": [
+    "is-unresolved",
+    "mobile-toolbar-icons",
+    "popover"
+  ]
+}

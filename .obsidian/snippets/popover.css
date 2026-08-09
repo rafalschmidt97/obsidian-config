@@ -1,0 +1,43 @@
+body {
+  --popover-width: 700px;
+  --popover-height: 500px;
+}
+
+.popover.hover-popover .markdown-preview-view,
+.popover.hover-popover .cm-editor {
+  font-size: 13px !important;
+  line-height: 1.35;
+
+}
+
+/* Paragraph spacing */
+
+.popover.hover-popover p {
+  margin-block-start: 0.3em !important;
+  margin-block-end: 0.3em !important;
+}
+
+/* Headings */
+
+.popover.hover-popover h1,
+.popover.hover-popover h2,
+.popover.hover-popover h3,
+.popover.hover-popover h4,
+.popover.hover-popover h5,
+.popover.hover-popover h6 {
+  margin-top: 0.5em !important;
+  margin-bottom: 0.3em !important;
+}
+
+/* Lists */
+
+.popover.hover-popover ul,
+.popover.hover-popover ol {
+  margin-top: 0.2em !important;
+  margin-bottom: 0.2em !important;
+}
+
+/* Code blocks */
+.popover.hover-popover pre {
+  margin: 0.4em 0 !important;
+}

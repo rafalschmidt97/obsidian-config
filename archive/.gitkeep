@@ -1,0 +1,3 @@
+Historical, read-only notes from retired orgs live here in the real vault.
+Archived orgs keep their old `org` value and are excluded from creation flows.
+The notes themselves are not tracked in this config repo; this file only keeps the folder.

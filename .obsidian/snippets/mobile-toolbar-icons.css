@@ -1,0 +1,84 @@
+/*
+ * Mobile toolbar icon overrides for plugin commands.
+ *
+ * Obsidian stores mobile toolbar items as command IDs, but renders the toolbar
+ * as buttons labelled by command name. These selectors intentionally cover a
+ * few label variants used by core/plugin commands across versions.
+ */
+
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="QuickAdd" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Quick Add" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="QuickAdd" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Quick Add" i] svg {
+  display: none !important;
+}
+
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="QuickAdd" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Quick Add" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="QuickAdd" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Quick Add" i]::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* iOS fallback: positions follow `.obsidian/app.json` mobileToolbarCommands. */
+body.is-mobile .mobile-toolbar-options-container > :nth-child(5) svg,
+body.is-mobile .mobile-toolbar > :nth-child(5) svg {
+  display: none !important;
+}
+
+body.is-mobile .mobile-toolbar-options-container > :nth-child(5)::before,
+body.is-mobile .mobile-toolbar > :nth-child(5)::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M13 2 3 14h9l-1 8 10-12h-9l1-8z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Omnisearch" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Vault search" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Vault Search" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Omnisearch" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Vault search" i] svg,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Vault Search" i] svg {
+  display: none !important;
+}
+
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Omnisearch" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Vault search" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[aria-label*="Vault Search" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Omnisearch" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Vault search" i]::before,
+body.is-mobile :is(button, .clickable-icon, .mobile-toolbar-option)[data-tooltip*="Vault Search" i]::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M8 11h6'/%3E%3Cpath d='M11 8v6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M8 11h6'/%3E%3Cpath d='M11 8v6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+body.is-mobile .mobile-toolbar-options-container > :nth-child(10) svg,
+body.is-mobile .mobile-toolbar > :nth-child(10) svg {
+  display: none !important;
+}
+
+body.is-mobile .mobile-toolbar-options-container > :nth-child(10)::before,
+body.is-mobile .mobile-toolbar > :nth-child(10)::before {
+  content: "";
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M8 11h6'/%3E%3Cpath d='M11 8v6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m21 21-4.34-4.34'/%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M8 11h6'/%3E%3Cpath d='M11 8v6'/%3E%3C/svg%3E") center / contain no-repeat;
+}

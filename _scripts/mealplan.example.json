@@ -1,0 +1,5 @@
+{
+  "_comment": "Household-specific placement for the weekly Meal Plan flow. Copy this file to mealplan.json and set your own values. mealplan.json is git-ignored so your real project name stays private. 'folder' is the vault path the weekly plan note is created in; 'planName' is the trailing label in the filename (YYYY-MM-DD--MM-DD {planName}.md).",
+  "folder": "personal/projects/Meal Plan",
+  "planName": "Cooking Schedule"
+}

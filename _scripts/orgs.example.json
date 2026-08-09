@@ -1,0 +1,5 @@
+{
+  "_comment": "Org priority for creation flows. Copy this file to orgs.json and set your own orgs. orgs.json is git-ignored so your real org names stay private; this example ships in the repo. 'order' pins org sort order in pickers (others fall back to alphabetical with 'personal' always last); 'default' is the fallback org when a flow is invoked without one. 'personal' is a normal org and can stay here.",
+  "order": ["work", "personal"],
+  "default": "work"
+}
