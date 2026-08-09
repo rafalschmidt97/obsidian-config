@@ -54,7 +54,7 @@ _templates/               Dumb content templates with {{placeholders}}
 _scripts/                 QuickAdd + Templater automation (raw JS stored as .md)
   quickadd/               Explicit, command-driven note creation
   templater/              Folder-click creation adapters
-  orgs.example.json       Org priority config (copy to orgs.json for your setup)
+  config/                 Per-user settings (orgs, meal plan); *.example.json ships
 .obsidian/                Curated subset of the real Obsidian config
 categories.md             Global index-of-indexes
 daily/  personal/  archive/  Empty placeholders showing the top-level layout
@@ -71,6 +71,54 @@ Two automation layers work together:
 
 Scripts are stored as raw JavaScript inside `.md` files on purpose, so Obsidian
 Sync ships them to mobile as ordinary notes. Do not rename them to `.js`.
+
+## Plugins
+
+The setup leans on a handful of community plugins. The enabled list is in
+[`.obsidian/community-plugins.json`](.obsidian/community-plugins.json); here is
+what each one actually does here.
+
+Automation backbone:
+
+- **QuickAdd** — runs every creation and refresh flow. All of `_scripts/quickadd/`
+  is wired to QuickAdd choices.
+- **Templater** — powers folder-click and link-click creation and renders the
+  templates; the `_scripts/templater/` adapters route a new file to the right one.
+
+Agentic access, the part I care about most:
+
+- **Local REST API & MCP Server** — exposes the vault over REST and MCP, so an AI
+  agent can read, create, route, and query notes. This is what makes agentic
+  note-taking work.
+
+Navigation and search:
+
+- **Notebook Navigator** — replaces the file explorer with a two-pane layout and
+  owns root folder order.
+- **Omnisearch** — fast full-text search across the vault.
+- **Various Complements** — word autocompletion drawn from your own notes.
+
+Content and links:
+
+- **Link Embed** — Notion-style preview cards for pasted links (clippings, references).
+- **Consistent Attachments and Links** — keeps links and attachments correct when
+  notes move or get renamed, which happens constantly given all the routing.
+- **Text Extractor** — OCR for images and PDFs, so screenshots and scans become
+  searchable text.
+
+Housekeeping and quality of life:
+
+- **Advanced Find and Replace** — regex find/replace across the vault, for bulk
+  edits and migrations.
+- **Trash Explorer** — restore or purge trashed files; pairs with the script that
+  trashes empty `Untitled` notes.
+- **Super Simple Time Tracker** — lightweight time tracking inside notes.
+- **Hide Sidebars on Window Resize** — auto-hides the sidebars on narrow windows.
+- **Mobile Command Icons** — my own plugin; gives plugin commands real icons in the
+  mobile toolbar (the scripts ship to mobile, so the mobile UI matters).
+
+Core plugins carry the rest: **Bases** powers the generated table and query views,
+and Daily Notes, Templates, Properties, and Sync are all on.
 
 ## Parametrized orgs
 
@@ -113,9 +161,8 @@ To audit exactly what is public, clone the repo and run `git ls-files`.
 There is no installer. Treat it as a reference:
 
 1. Read the design doc to decide which ideas fit your workflow.
-2. Install the community plugins listed in
-   [`.obsidian/community-plugins.json`](.obsidian/community-plugins.json)
-   (QuickAdd, Templater, Bases, Notebook Navigator, Omnisearch, and friends).
+2. Install the community plugins (see [Plugins](#plugins)) and enable the Bases
+   core plugin.
 3. Copy the templates and scripts you want, set up `orgs.json`, and wire the
    QuickAdd choices to the scripts.
 
