@@ -26,6 +26,7 @@ function fixture(seeds = [], answers = []) {
     return file;
   }
   folder(''); folder('work'); folder('personal');
+  add('_scripts/quickadd/journal.md', fs.readFileSync(path.join(root, '_scripts/quickadd/journal.md'), 'utf8'));
   for (const seed of seeds) add(...seed);
   const app = {
     vault: {
@@ -179,4 +180,39 @@ test('triage to a project clears inbox type and old topic but preserves unrelate
   assert.equal(fm.type, undefined); assert.equal(fm.topic, undefined);
   assert.equal(fm.project, '[[Alpha]]'); assert.equal(fm.created, '2026-09-20T12:00');
   assert.deepEqual(fm.aliases, ['Keep']);
+});
+
+test('folder-click now activates matching drafts for each supported journal context', async () => {
+  for (const [folder, subject, context, extraAnswers] of [
+    ['work/people/Alex', 'Alex', { type: '1-1', attendees: ['[[Alex]]'] }, []],
+    ['work/meetings/Review', 'Review', { type: 'meeting', meeting: '[[Review]]' }, []],
+    ['work/teams/Engineering/journal', 'Engineering', { type: 'team', team: '[[Engineering]]' }, []],
+    ['work/journal', 'Visit', { type: 'event' }, ['event']],
+  ]) {
+    const body = '\n\n## Talking Points\n\n- Keep preparation\n';
+    const fm = { org: 'work', category: 'journal', created: '2026-09-01T10:00', ...context };
+    const raw = `---\norg: work\ncategory: journal\ncreated: 2026-09-01T10:00\ncustom: keep\n---${body}`;
+    const f = fixture([[`${folder}/Draft ${subject}.md`, raw, fm], [`${folder}/Untitled.md`, '']],
+      ['now', ...extraAnswers, `use draft: Draft ${subject}`]);
+    await f.templater('_scripts/templater/apply-journalq-folder-template.md', `${folder}/Untitled.md`);
+    const result = f.files.get(`${folder}/2026-09-20 12-00 ${subject}.md`);
+    assert.ok(result); assert.match(result.content, /drafted: 2026-09-01T10:00/);
+    assert.match(result.content, /created: 2026-09-20T12:00/); assert.match(result.content, /custom: keep/);
+    assert.ok(result.content.endsWith(body));
+    assert.ok(!f.files.has(`${folder}/Untitled.md`)); assert.ok(!f.prompts.includes('title?'));
+  }
+});
+
+test('folder-click create new leaves a draft intact; activation uses collision-safe names', async () => {
+  const base = 'work/people/Alex';
+  const fm = { org: 'work', category: 'journal', type: '1-1', attendees: ['[[Alex]]'], created: '2026-09-01T10:00' };
+  for (const choice of ['create new', 'use draft: Draft Alex']) {
+    const f = fixture([[`${base}/Draft Alex.md`, '---\ncreated: 2026-09-01T10:00\n---\nPrep', fm],
+      [`${base}/2026-09-20 12-00 Alex.md`, 'Existing'], [`${base}/Untitled.md`, '']], ['now', choice]);
+    f.template('Journal Person');
+    await f.templater('_scripts/templater/apply-journalq-folder-template.md', `${base}/Untitled.md`);
+    assert.equal(f.files.get(`${base}/2026-09-20 12-00 Alex.md`).content, 'Existing');
+    assert.ok(f.files.has(`${base}/2026-09-20 12-00 Alex (1).md`));
+    assert.equal(f.files.has(`${base}/Draft Alex.md`), choice === 'create new');
+  }
 });

@@ -883,6 +883,8 @@ When a normal journal flow runs later (`Journal` -> `mode? now` -> selected rout
 
 If a matching draft exists, QuickAdd should offer to activate it before asking prompts that are only needed for a new note. For org-wide journals, this means matching drafts are offered after `type?` and before `attendees?`/`title?`. Activation preserves the body, renames the old draft `created` value to `drafted`, writes a new `created` with the occurrence timestamp, and renames the file from `Draft {Context}.md` to `YYYY-MM-DD HH-mm {Context}.md`. If no draft exists, QuickAdd creates a normal occurred journal immediately.
 
+Folder-click `now` offers the same activation for supported org-wide, person, meeting, and team routes. It loads the synced journal script through the vault API and reuses its matching/activation functions. After successful activation it removes only the empty placeholder file created by the click. Choosing `create new` leaves drafts untouched; cancelling the picker makes no changes to them.
+
 Each org can surface open journal drafts through `{org}/bases/drafts.base`. The base filters to `category == "journal"`, the matching `org`, non-archived/non-obsolete notes, and `file.basename.startsWith("Draft ")`. Use this base for direct draft review instead of manually searching folders.
 
 ## Periodic Notes

@@ -28,6 +28,7 @@ module.exports = {
   meeting,
   project,
   team,
+  activateFolderDraft,
 };
 
 async function entry(params, settings = {}) {
@@ -299,6 +300,24 @@ async function activateDraft(params, file, targetPathWithoutExtension) {
   await app.workspace.getLeaf().openFile(activated || file);
   notice(`Activated journal draft: ${targetPath}`);
   return activated || file;
+}
+
+// Folder-click adapter uses the same draft matching and activation as explicit capture.
+async function activateFolderDraft(params, targetFolder, context, select) {
+  const drafts = await findMatchingDrafts(params, targetFolder, (fm, file) => {
+    if (!isDraftJournal(fm, context.org, file) || (fm.type || "") !== context.type) return false;
+    if (context.person) return frontmatterValueMatchesLink(fm.attendees, context.person);
+    for (const key of ["meeting", "project", "team"]) {
+      if (context[key]) return frontmatterValueMatchesLink(fm[key], context[key]);
+    }
+    return !fm.meeting && !fm.project && !fm.team;
+  });
+  if (!drafts.length) return false;
+  const selected = await select([...drafts.map(file => `use draft: ${file.basename}`), "create new"], [...drafts, null]);
+  if (!selected) return false;
+  const subject = context.person || context.meeting || context.project || context.team || draftSubject(selected);
+  await activateDraft(params, selected, `${targetFolder}/${datetime(params)} ${safeFilename(subject)}`);
+  return true;
 }
 
 async function runBackable(action) {

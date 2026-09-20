@@ -89,6 +89,18 @@ if (!org) {
 
 const mode = await tp.system.suggester(["now", "draft"], ["now", "draft"], true, "mode?");
 const isDraft = mode === "draft";
+const offerDraft = async (context) => {
+  if (isDraft) return false;
+  const script = app.vault.getAbstractFileByPath("_scripts/quickadd/journal.md");
+  if (!script) throw new Error("Journal script not found.");
+  const journal = new Function("module", `${await app.vault.cachedRead(script)}\nreturn module.exports;`)({ exports: {} });
+  const activated = await journal.activateFolderDraft(
+    { app, quickAddApi: { date: tp.date } }, folder, { org, ...context },
+    (labels, files) => tp.system.suggester(labels, files, true, "draft?")
+  );
+  if (activated && currentFile && !(await app.vault.read(currentFile)).trim()) await app.vault.delete(currentFile);
+  return activated;
+};
 
 if (parts.length === 2 && parts[1] === "journal") {
   const typeOptions = isDraft
@@ -110,6 +122,7 @@ if (parts.length === 2 && parts[1] === "journal") {
     values.previous = `${range.previousMonth} ${orgCap} Monthly Reflection`;
     values.next = `${range.nextMonth} ${orgCap} Monthly Reflection`;
   } else {
+    if (await offerDraft({ type })) return;
     filenameSubject = await tp.system.prompt("title?", currentTitle, true);
     templatePath = "_templates/Journal.md";
     values.typeLine = type ? `type: ${type}` : "";
@@ -124,11 +137,13 @@ if (parts.length === 2 && parts[1] === "journal") {
   filenameSubject = person;
   templatePath = "_templates/Journal Person.md";
   values.person = person;
+  if (await offerDraft({ type: "1-1", person })) return;
 } else if (parts.length === 4 && parts[1] === "teams" && parts[3] === "journal") {
   const team = parts[2];
   filenameSubject = team;
   templatePath = "_templates/Journal Team.md";
   values.team = team;
+  if (await offerDraft({ type: "team", team })) return;
 } else {
   const meetingIndex = parts.lastIndexOf("meetings");
   if (meetingIndex >= 0 && parts.length === meetingIndex + 2) {
@@ -144,6 +159,7 @@ if (parts.length === 2 && parts[1] === "journal") {
     templatePath = "_templates/Journal Meeting.md";
     values.meeting = meeting;
     values.contextLines = contextLines;
+    if (await offerDraft({ type: "meeting", meeting })) return;
   }
 }
 
