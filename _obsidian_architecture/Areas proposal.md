@@ -1,6 +1,8 @@
 # Areas: context-first capture and navigation
 
-Status: proposed design. This document does not change the running vault contract.
+Status: superseded design discussion. The accepted model uses `/areas`, not `/notes`.
+Read `Obsidian design.md` for the current running contract. The text below preserves
+the original proposal and trade-offs; it is not a migration instruction.
 After approval and implementation, incorporate the accepted rules into `Obsidian design.md`
 and its LLM summary. No existing notes move as part of writing this proposal.
 

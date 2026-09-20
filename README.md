@@ -25,22 +25,29 @@ alone makes the extra structure worth it for me.
 
 ## Core idea
 
-Everything in the vault is one of two things:
+Two common content shapes share the same contexts:
 
 ```text
-Journal = something happened   (a meeting, a 1-1, a workout, an event)
-Note    = knowledge or thought (research, a draft, a reference, an idea)
+Journal = an occurrence or reflection (meeting, 1-1, workout, event)
+Note    = knowledge or material       (research, reference, idea)
 ```
 
-On top of that, a small frontmatter schema drives templates, folders, and
-queries instead of relying on tags or paths:
+The physical structure is `inbox/`, `areas/`, and `projects/` within each org.
+An area holds ongoing context and resources; a project has a completion condition.
+Notes, journals, and specialized content live together where they belong.
+
+A small frontmatter schema drives templates and views:
 
 | Field      | Meaning                                             | Example values                          |
 | ---------- | --------------------------------------------------- | --------------------------------------- |
 | `org`      | Work/life namespace (a top-level folder)            | `work`, `personal`                      |
 | `category` | Primary note family (picks template + main view)    | `journal`, `note`, `person`, `project`  |
 | `type`     | Category-specific subtype                           | `1-1`, `meeting`, `research`, `reflection` |
-| `topic`    | Durable subject bucket, survives folder moves       | `career`, `learning`, `assets/finances` |
+| `area`     | Ongoing context, linked to an Area profile           | `[[personal/areas/health/Health]]` |
+
+`area` replaces subject-based routing through `topic`. Category and type stay:
+a workout and a doctor visit both belong to Health, but remain different journal
+types. Project, meeting, and person relationships retain their custom templates.
 
 The full specification lives in
 [`_obsidian_architecture/Obsidian design.md`](_obsidian_architecture/Obsidian%20design.md).
@@ -55,14 +62,44 @@ I capture first and organize when I have time:
 - **Journal** records events, meetings, and 1-1s. Regular entries default to
   `event`; drafts are for preparing upcoming occurrences and can be activated later.
 - **Note** creates knowledge or reference material directly in its destination.
-- **Sport** asks only for a title and shows the five previous sport sessions inside
+- **Area selection** is shared by Note and Journal: choose Loose, Area, Project,
+  Meeting, Person, or Team. Select an existing area or create one while capturing.
+- **Sport** goes directly to Health, asks only for a title, and shows previous sport sessions inside
   the new entry, across all activities. **Reflection** is for free-form thinking;
   **Monthly Reflection** is the period-based review. Sport and Reflection have no
   draft step.
 
+Personal defaults are **Home, Cooking, Travel, Car, Friends, Health, Growth, and
+Finances**. Each profile collects its content in live views. More areas can be
+created under Entities > Area. Projects keep their own folders and can link to areas.
+
+```text
+personal/
+  inbox/
+  areas/
+    finances/
+      Finances.md
+      Budget principles.md
+      2026-09-20 Advisor call.md
+    health/
+    people/
+    meetings/
+    teams/
+    resources/
+    journal/      # Unassigned occurrences
+    loose/        # Unassigned knowledge
+    archive/
+  projects/
+    Change bank/
+    archive/
+```
+
+Daily, weekly, and Bases folders support the content structure. A root archive
+also preserves former orgs. Archiving a context keeps its files together.
+
 Daily and weekly notes are normally accessed through periodic-note tooling.
-The QuickAdd menu keeps common captures at the top, with **Actions** (Triage,
-Archive), **Entities** (profile creation), and **System** (periodic utilities and
+The QuickAdd menu keeps common captures at the top, with **Actions** (Move / reassign,
+Triage, Archive), **Entities** (profile creation), and **System** (area setup, periodic utilities and
 refreshes) at the bottom. The exact menu is documented in
 [`_scripts/README.md`](_scripts/README.md#quickadd-menu).
 
@@ -71,7 +108,7 @@ refreshes) at the bottom. The exact menu is documented in
 **Bases** provides live views over note properties, such as sport history.
 **Tasks**, **Priority**, and **Wishlist** are generated Markdown snapshots instead:
 they collect open checkboxes from `## Tasks` sections in weekly notes, journals
-(including drafts), project profiles, and books. They refresh on startup or through
+(including drafts), project and area profiles, and books. They refresh on startup or through
 **System > Tasks**. `#prio` also shows an item in Priority; `#wl` moves it to Wishlist.
 
 Complete or edit a task in its source note. Checking a box in a generated snapshot
@@ -216,32 +253,53 @@ There is no installer. Treat it as a reference:
    The other [plugins](#plugins) support my setup; choose those you need.
 3. Copy the scripts and their referenced templates, keeping the documented vault
    paths. Both QuickAdd capture scripts and Templater adapters require
-   `_scripts/shared/runtime.md`. The folder-click journal adapter also loads
-   `_scripts/quickadd/journal.md`. For Sport, include both
+   the whole `_scripts/shared/` directory. Folder capture also loads
+   `_scripts/quickadd/journal.md`. Include the Area template and shared Bases under
+   `_templates/bases/`. For Sport, include both
    `_templates/Journal Sport.md` and `_templates/bases/sport-history.base`.
 4. Set up `orgs.json` as above. Use
    [`.obsidian/plugins/quickadd/data.example.json`](.obsidian/plugins/quickadd/data.example.json)
    as the starting point for QuickAdd's local `data.json`. Adapt the org-specific
    weekly shortcuts and remove choices you do not use. In an existing setup,
    merge the choices rather than replacing your plugin settings wholesale.
-5. Configure Templater's template folder, new-file trigger, and folder/path rules
-   for your own orgs, using the adapters in `_scripts/templater/`. The private
-   Templater settings are not shipped; consult the design doc's
+5. Configure Templater's template folder and new-file trigger with **file-pattern
+   templates enabled and folder templates disabled**. Use the unified adapter at
+   `_scripts/templater/apply-templateq-folder-template.md` for active org
+   inbox/areas/projects/weekly paths and daily notes, excluding archive segments.
+   The private Templater settings are not shipped; consult the design doc's
    [invocation modes](_obsidian_architecture/Obsidian%20design.md#invocation-modes)
    for routing behavior. Configure native daily/periodic-note tooling separately.
-6. Keep the shared runtime and templates available on each device. Runtime scripts
+6. Run **System > Setup personal areas** once to create the eight defaults. The
+   operation preserves existing profiles. Use
+   [`areas.example.json`](areas.example.json) as the basis for an
+   ignored `areas.json` if you want different defaults. Work areas are created as needed.
+7. Keep the shared runtime and templates available on each device. Runtime scripts
    are Markdown files for Sync; `orgs.json` and other JSON settings also need to be
    available where you run them. Script checks run with
    `node --test _scripts/tests/flows.test.cjs`; these use an in-memory vault, so also
    try the chosen flows in Obsidian.
 
 **Meal Plan needs local setup.** The example QuickAdd menu includes it, but
-`_templates/Meal Plan.md` is not in this repo. Supply your own template and copy
-[`mealplan.example.json`](_scripts/config/mealplan.example.json) to `mealplan.json`
-to choose its destination and filename label, or remove the Meal Plan choice.
+`_templates/Meal Plan.md` is not in this repo. Supply your own template and an ignored
+`_scripts/config/mealplan.json` with `folder` and `planName`, or remove the choice.
+The default destination is `personal/areas/cooking` and the filename label is
+`Cooking Schedule`. The template receives period fields and `relationshipLines`
+for its area link.
 
 The private vault's other org-specific Bases and notes are not included either.
 This is a reference configuration, not a complete vault ready to open and use.
+
+## Existing-vault migrations
+
+Back up the complete vault outside its directory before reorganizing content.
+Record every source/destination, preserve attachments and custom metadata, and
+compare link resolution before and after. Test real Base rendering as well as script
+logic. The design documents this verification contract; private migration manifests
+and note content are never published here.
+
+Old subject metadata is retained as `legacyTopic` where it cannot be mapped safely
+to an Area. Imported source-system `area` fields are preserved as `legacyArea`.
+New captures use the current schema; historical metadata is not silently discarded.
 
 ## Inspiration and thanks
 

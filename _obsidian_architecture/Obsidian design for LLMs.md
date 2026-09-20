@@ -1,19 +1,31 @@
+# Agent guide
 
-Source of truth: `_obsidian_architecture/Obsidian design.md` (vault-relative).
-## Agent Checklist
+Read `Obsidian design.md` for the current contract. The Areas proposal is historical,
+not an alternate implementation specification.
 
-Before changing vault architecture, templates, scripts, or config:
+## Model
 
-1. Read `Obsidian design.md` for the authoritative rule.
-2. Read the relevant template in `_templates/`.
-3. Read the relevant script in `_scripts/`.
-4. Read the relevant config under `.obsidian/`, but avoid local REST API data unless explicitly required.
-5. Make the smallest correct change.
-6. Keep QuickAdd scripts as `.md` raw JavaScript.
-7. Keep Templater folder templates disabled.
-8. Do not add `tags` to new target-schema content.
-9. Do not make Bases depend on paths when a property query can model the relationship.
-10. Do not edit generated action-point views as canonical data.
-11. Do not enable Custom Sort or migration-only plugins unless the source design changes.
-12. If you change behavior, update both `Obsidian design.md` and this LLM summary if needed.
-13. Before changing shared script behavior, read `_scripts/README.md`. Shared helpers live in `_scripts/shared/runtime.md`; keep QuickAdd exports synchronous and load dependencies inside async calls through the vault API. Run `node --test _scripts/tests/flows.test.cjs` after script changes.
+- Active org content lives in inbox/, areas/, projects/. Daily/weekly/bases are infrastructure.
+- Areas contains durable Area profiles, people/meetings/teams, resources, loose knowledge,
+  and unassigned journals. Category/type describe content, not its physical root.
+- area is an optional single link to a category: area profile. Keep custom templates
+  and project/meeting/person relationships. No topic in new notes.
+- legacyTopic/legacyArea preserve imported metadata; do not use them as new routing fields.
+- Personal defaults: Home, Cooking, Travel, Car, Friends, Health, Growth, Finances.
+- Sport -> Health, title only. Reflection immediate. Drafts only for event/contextual journals.
+- Respect both local areas/archive and projects/archive, plus historical root archive.
+
+## Editing and routing
+
+1. Read affected templates and `_scripts/README.md` before changing automation.
+2. Use the shared area resolver; avoid parallel routing implementations.
+3. Keep QuickAdd exports synchronous. Load synced Markdown modules through vault APIs.
+4. Keep Templater folder-template mode disabled; use its unified file-pattern adapter.
+5. Preserve bodies, original capture times, custom metadata, and attachment targets.
+6. Move in Obsidian with link-aware rename, or use a verified migration manifest and
+   native link-resolution baseline for controlled offline bulk operations.
+7. Area/project tasks and draft tasks feed snapshots. Edit tasks at their source.
+8. Generic public config stays separate from ignored private org settings and notes.
+9. Run `node --test _scripts/tests/flows.test.cjs` and live-app checks for runtime changes.
+10. Before bulk migration, back up outside the vault, verify hashes, record every move,
+    and compare post-migration links and counts. Restore Sync state when complete.
