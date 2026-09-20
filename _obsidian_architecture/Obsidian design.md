@@ -534,6 +534,8 @@ created: 2026-05-29T09:15
 
 So `personal/notes/assets/finances/invoices/` contains `category: invoice` files, and `personal/notes/{topic}/` can contain admin/evidence notes when the artifact belongs to that topic. Do not split a topic like healthcare, assets, or documents into separate trees.
 
+Folder-click creation in `healthcare`, `assets/car`, and `assets/house` asks `category?` (`note`, `invoice`) before `title?`. Ordinary notes keep a descriptive filename; invoices receive the date prefix. Only the dedicated `assets/finances/invoices` folder infers invoice without asking.
+
 ## Directory Structure
 
 ```text

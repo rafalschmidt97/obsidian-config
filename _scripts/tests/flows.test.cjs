@@ -129,3 +129,19 @@ test('both team creation paths produce a discoverable entity folder', async () =
     assert.ok(!f.files.has('work/teams/Engineering.md'));
   }
 });
+
+test('mixed topic folders ask note or invoice; dedicated invoices stay automatic', async () => {
+  for (const topic of ['healthcare', 'assets/car', 'assets/house', 'assets/finances/invoices']) {
+    for (const category of topic.endsWith('/invoices') ? ['invoice'] : ['note', 'invoice']) {
+      const f = fixture([], [...(topic.endsWith('/invoices') ? [] : [category]), 'Record']);
+      f.template('Note'); f.template('Invoice');
+      const base = `personal/notes/${topic}`;
+      f.add(`${base}/Untitled.md`);
+      const file = await f.templater('_scripts/templater/apply-templateq-folder-template.md', `${base}/Untitled.md`);
+      assert.equal(file.path, `${base}/${category === 'invoice' ? '2026-09-20 ' : ''}Record.md`);
+      assert.match(file.content, new RegExp(`category: ${category}`));
+      assert.ok(file.content.includes(`topic: "${topic}"`));
+      assert.equal(f.prompts.includes('category?'), !topic.endsWith('/invoices'));
+    }
+  }
+});

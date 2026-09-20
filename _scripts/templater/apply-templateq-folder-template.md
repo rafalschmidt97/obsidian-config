@@ -226,10 +226,18 @@ if (isDailyName || (parts.length === 1 && parts[0] === "daily")) {
     values = { org, created, journalLine: "", body: "" };
   } else if (org === "personal" && invoiceTopicForFolder()) {
     const topic = invoiceTopicForFolder();
+    const category = topic === "assets/finances/invoices" ? "invoice"
+      : await tp.system.suggester(["note", "invoice"], ["note", "invoice"], true, "category?");
     const title = await prompt("title?");
-    templatePath = "_templates/Invoice.md";
-    targetPath = `${folder}/${tp.date.now("YYYY-MM-DD")} ${safeFilename(title)}`;
-    values = { created, topic };
+    if (category === "invoice") {
+      templatePath = "_templates/Invoice.md";
+      targetPath = `${folder}/${tp.date.now("YYYY-MM-DD")} ${safeFilename(title)}`;
+      values = { created, topic };
+    } else {
+      templatePath = "_templates/Note.md";
+      targetPath = `${folder}/${safeFilename(title)}`;
+      values = { org, created, topicLine: `topic: "${topic}"`, typeLine: "", relationshipLines: "", body: "" };
+    }
   } else if (org === "personal" && parts.length === 3 && parts[2] === "places") {
     const type = await tp.system.suggester(["entry", "recommendation"], ["entry", "recommendation"], true, "type?");
     const topic = await tp.system.suggester(
