@@ -1,0 +1,42 @@
+filters:
+  and:
+    - category == "journal"
+    - type == "sport"
+    - '!file.path.startsWith("archive/")'
+    - '!file.name.startsWith("Draft ")'
+    - status != "archived"
+    - status != "obsolete"
+    - created
+properties:
+  file.name:
+    displayName: Session
+  note.created:
+    displayName: When
+views:
+  - type: table
+    name: All sports
+    filters:
+      and:
+        - org == "personal"
+        - file.path.startsWith("personal/")
+    order:
+      - file.name
+      - note.created
+    sort:
+      - property: note.created
+        direction: DESC
+  - type: table
+    name: Previous sessions
+    limit: 5
+    filters:
+      and:
+        - org == this.org
+        - file.path.startsWith(this.org + "/")
+        - file.path != this.file.path
+        - date(created) < date(this.created)
+    order:
+      - file.name
+      - note.created
+    sort:
+      - property: note.created
+        direction: DESC

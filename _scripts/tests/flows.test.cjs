@@ -320,7 +320,7 @@ test('Sport and Reflection shortcuts choose type without asking, including draft
     const org = type === 'sport' ? 'personal' : 'work';
     const orgAnswers = type === 'sport' ? [] : [org];
     const f = fixture([], [...orgAnswers, 'draft', 'Session', ...orgAnswers, 'now', 'use draft: Draft Session']);
-    f.template('Journal');
+    f.template('Journal'); f.template('Journal Sport');
     const script = f.load('_scripts/quickadd/journal.md');
     await script.entry(f, { flow: type });
     const draft = f.files.get(`${org}/journal/Draft Session.md`);
@@ -341,5 +341,21 @@ test('public QuickAdd config registers distinct Sport and Reflection commands', 
     assert.equal(choice.command, true);
     assert.equal(choice.macro.commands[0].settings.flow, name.toLowerCase());
     assert.equal(choice.macro.commands[0].path, '_scripts/quickadd/journal.md');
+  }
+});
+
+test('sport capture embeds history through QuickAdd and folder-click', async () => {
+  for (const mode of ['quickadd', 'templater']) {
+    const f = fixture([], mode === 'quickadd' ? ['now', 'Training'] : ['now', 'sport', 'Training']);
+    f.template('Journal Sport');
+    if (mode === 'quickadd') await f.load('_scripts/quickadd/journal.md').entry(f, { flow: 'sport' });
+    else {
+      f.add('personal/journal/Untitled.md');
+      await f.templater('_scripts/templater/apply-journalq-folder-template.md', 'personal/journal/Untitled.md');
+    }
+    const content = f.files.get('personal/journal/2026-09-20 12-00 Training.md').content;
+    assert.match(content, /!\[\[sport-history\.base#Previous sessions\]\]/);
+    assert.match(content, /type: sport/);
+    assert.ok(!content.includes('{{'));
   }
 });

@@ -17,6 +17,7 @@ const TEMPLATE_DIR = "_templates";
 
 const TEMPLATE = {
   journal: `${TEMPLATE_DIR}/Journal.md`,
+  sport: `${TEMPLATE_DIR}/Journal Sport.md`,
   person: `${TEMPLATE_DIR}/Journal Person.md`,
   meeting: `${TEMPLATE_DIR}/Journal Meeting.md`,
   project: `${TEMPLATE_DIR}/Journal Project.md`,
@@ -103,7 +104,7 @@ async function journal(params, selectedOrg, options = {}) {
   const title = await requiredInput(params, "title?");
 
   return await createOrActivateJournal(params, {
-    template: TEMPLATE.journal,
+    template: type === "sport" ? TEMPLATE.sport : TEMPLATE.journal,
     org,
     targetFolder: `${org}/journal`,
     filenameSubject: title,

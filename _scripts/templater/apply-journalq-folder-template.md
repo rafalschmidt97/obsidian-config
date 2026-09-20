@@ -65,7 +65,7 @@ if (parts.length === 2 && parts[1] === "journal") {
   } else {
     if (await offerDraft({ type })) return;
     filenameSubject = await tp.system.prompt("title?", currentTitle, true);
-    templatePath = "_templates/Journal.md";
+    templatePath = type === "sport" ? "_templates/Journal Sport.md" : "_templates/Journal.md";
     values.typeLine = type ? `type: ${type}` : "";
     if (type === "event") {
       const attendees = await tp.system.prompt("attendees? optional, comma-separated", "", false);
