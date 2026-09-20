@@ -387,7 +387,7 @@ async function project(params) {
 async function team(params) {
   const org = await chooseNonPersonalOrg(params);
   const name = await requiredInput(params, "team?");
-  return await createFromTemplate(params, TEMPLATE.team, `${org}/teams/${safeFilename(name)}`, { org });
+  return await createFromTemplate(params, TEMPLATE.team, `${org}/teams/${safeFilename(name)}/${safeFilename(name)}`, { org });
 }
 
 async function book(params) {

@@ -74,7 +74,22 @@ function fixture(seeds = [], answers = []) {
     return context.module.exports;
   }
   function template(name) { return add(`_templates/${name}.md`, fs.readFileSync(path.join(root, `_templates/${name}.md`), 'utf8')); }
-  return { files, app, quickAddApi, opened, prompts, load, template, folder, add };
+  async function templater(relative, currentPath) {
+    const file = files.get(currentPath);
+    const tp = {
+      file: { content: file.content, path: () => currentPath, title: file.basename,
+        move: async p => { if (`${p}.md` !== file.path) await app.fileManager.renameFile(file, `${p}.md`); } },
+      date: quickAddApi.date,
+      system: { prompt: quickAddApi.inputPrompt,
+        suggester: (labels, values, required, prompt) => quickAddApi.suggester(labels, values, prompt) },
+    };
+    const source = fs.readFileSync(path.join(root, relative), 'utf8').replace(/^<%\*\s*/, '').replace(/-%>\s*$/, '');
+    const context = vm.createContext({ app, tp, tR: '', Notice: class {}, console });
+    await vm.runInContext(`(async () => {${source}\n})()`, context);
+    if (files.get(file.path) === file) file.content = context.tR;
+    return file;
+  }
+  return { files, app, quickAddApi, opened, prompts, load, template, folder, add, templater };
 }
 
 test('project tasks enter all three views, respecting markers, scope, status and completion', async () => {
@@ -98,4 +113,19 @@ test('project tasks enter all three views, respecting markers, scope, status and
   assert.doesNotMatch(tasks + priority, /Later/);
   assert.doesNotMatch(tasks + priority + wishlist, /Done|Outside|Archived path|Archived status|Other org/);
   assert.equal(f.files.get('work/projects/Alpha/Alpha.md').content, original);
+});
+
+test('both team creation paths produce a discoverable entity folder', async () => {
+  for (const mode of ['quickadd', 'templater']) {
+    const f = fixture([], mode === 'quickadd' ? ['work', 'Engineering'] : ['Engineering']);
+    f.template('Team');
+    if (mode === 'quickadd') await f.load('_scripts/quickadd/templates.md').entry(f, { flow: 'team' });
+    else {
+      f.add('work/teams/Untitled.md');
+      await f.templater('_scripts/templater/apply-templateq-folder-template.md', 'work/teams/Untitled.md');
+    }
+    assert.match(f.files.get('work/teams/Engineering/Engineering.md').content, /category: team/);
+    assert.ok(f.files.get('work/teams').children.some(x => x.name === 'Engineering' && x.children));
+    assert.ok(!f.files.has('work/teams/Engineering.md'));
+  }
 });

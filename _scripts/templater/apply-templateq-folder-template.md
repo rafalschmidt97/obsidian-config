@@ -187,7 +187,7 @@ if (isDailyName || (parts.length === 1 && parts[0] === "daily")) {
 } else if (parts.length === 2 && parts[1] === "teams" && org !== "personal") {
   const name = await prompt("team?");
   templatePath = "_templates/Team.md";
-  targetPath = `${org}/teams/${safeFilename(name)}`;
+  targetPath = `${org}/teams/${safeFilename(name)}/${safeFilename(name)}`;
   values = { org, created };
 } else if (parts[parts.length - 1] === "meetings") {
   const meeting = await prompt("meeting?");

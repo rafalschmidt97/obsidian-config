@@ -683,6 +683,8 @@ QuickAdd user scripts are raw JavaScript stored as `.md` files under `_scripts/q
 
 Folder-click creation is deliberately narrower than QuickAdd. If the path is ambiguous, the adapter should show a notice and stop instead of guessing.
 
+Both Team creation paths create `{org}/teams/{Team}/{Team}.md`, so the new entity is immediately discoverable by team journal, note, meeting, and archive pickers.
+
 Examples:
 
 | Folder-click path | Result |
