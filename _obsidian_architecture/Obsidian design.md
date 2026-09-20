@@ -857,7 +857,7 @@ Title/name prompts should be last in each creation flow. Ask routing, type, topi
 
 | Destination category | Route | Required fields | Optional/generated fields |
 | -------------------- | ----- | --------------- | ------------------------- |
-| `journal` | `{org}/journal/` | `org`, `category`, `created` | Optional `type` chosen during capture, including no type. Options: `event`, `reflection`, `sport` |
+| `journal` | `{org}/journal/` | `org`, `category`, `created` | QuickAdd defaults to `type: event`. Dedicated Sport and Reflection commands set their respective types without a type prompt. |
 | `people` | `{org}/people/{Person}/` | `org`, `category`, `type: 1-1`, `created`, `attendees` | |
 | `meetings` | selected meeting folder anywhere under `{org}` | `org`, `category`, `type: meeting`, `created`, `meeting` | copied/inferred `project` or `team` from the meeting path |
 | `projects` | selected project folder directly, or selected meeting under `{org}/projects/{Project}/meetings/{Meeting}/` | `org`, `category`, `type: project`, `created`, `project` | `type: meeting` and `meeting` when a project meeting is selected |
@@ -883,7 +883,9 @@ When a normal journal flow runs later (`Journal` -> `mode? now` -> selected rout
 - `created` exists
 - `drafted` is missing
 
-If a matching draft exists, QuickAdd should offer to activate it before asking prompts that are only needed for a new note. For org-wide journals, matching drafts are offered after `type?` and before `title?`. QuickAdd does not prompt for attendees; new event journals include `attendees: []` for optional manual editing. Person journals still derive their attendee from the selected person. Activation preserves the body, renames the old draft `created` value to `drafted`, writes a new `created` with the occurrence timestamp, and renames the file from `Draft {Context}.md` to `YYYY-MM-DD HH-mm {Context}.md`. If no draft exists, QuickAdd creates a normal occurred journal immediately.
+QuickAdd's regular Journal command keeps its org/mode/context choices, with the org-wide `journal` route defaulting to `event` and proceeding straight to `title?`. Sport is a separate command targeting `personal/journal/` and asking `mode?`, then `title?`. Reflection is a separate command asking `org?`, `mode?`, and `title?` for an ad-hoc thinking journal; Monthly Reflection remains the separate period-based flow. All three retain draft creation and activation. `none` remains valid on older notes but is no longer a QuickAdd capture choice.
+
+If a matching draft exists, QuickAdd offers to activate it before `title?`, using the type supplied by the command. QuickAdd does not prompt for attendees; new event journals include `attendees: []` for optional manual editing. Person journals still derive their attendee from the selected person. Activation preserves the body, renames the old draft `created` value to `drafted`, writes a new `created` with the occurrence timestamp, and renames the file from `Draft {Context}.md` to `YYYY-MM-DD HH-mm {Context}.md`. If no draft exists, QuickAdd creates a normal occurred journal immediately.
 
 Folder-click `now` offers the same activation for supported org-wide, person, meeting, and team routes. It loads the synced journal script through the vault API and reuses its matching/activation functions. After successful activation it removes only the empty placeholder file created by the click. Choosing `create new` leaves drafts untouched; cancelling the picker makes no changes to them.
 

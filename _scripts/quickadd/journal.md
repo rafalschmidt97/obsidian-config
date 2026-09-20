@@ -1,6 +1,6 @@
 // Raw JavaScript stored as .md so Obsidian Sync includes it on mobile.
 // QuickAdd evaluates exports synchronously; dependencies load only when a flow is invoked.
-module.exports = Object.fromEntries(["entry", "journal", "generic", "draft", "future", "person", "meeting", "project", "team", "activateFolderDraft"]
+module.exports = Object.fromEntries(["entry", "journal", "generic", "sport", "reflection", "draft", "future", "person", "meeting", "project", "team", "activateFolderDraft"]
   .map(name => [name, async (params, ...args) => {
     const file = params.app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
     if (!file) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
@@ -27,6 +27,8 @@ return {
   entry,
   journal,
   generic: journal,
+  sport,
+  reflection,
   draft,
   future: draft,
   person,
@@ -38,10 +40,10 @@ return {
 
 async function entry(params, settings = {}) {
   return await runBackable(async () => {
-    const flows = { journal, generic: journal, draft, future: draft, person, meeting, project, team };
+    const flows = { journal, generic: journal, sport, reflection, draft, future: draft, person, meeting, project, team };
     const flow = settings.flow ? flows[settings.flow] : journalMenu;
     if (!flow) throw new Error(`Unknown journal flow: ${settings.flow}`);
-    return await flow(params, undefined, { draft: Boolean(settings.draft) });
+    return await flow(params, settings.org, settings.draft === undefined ? {} : { draft: Boolean(settings.draft) });
   });
 }
 
@@ -75,13 +77,8 @@ async function draft(params, selectedOrg) {
 }
 
 async function journal(params, selectedOrg, options = {}) {
-  const { quickAddApi } = env(params);
   const org = selectedOrg ?? await chooseOrg(params);
-  const type = await choose(params,
-    ["none", "event", "reflection", "sport"],
-    ["", "event", "reflection", "sport"],
-    "type?"
-  );
+  const type = options.type || "event";
 
   const matchesDraft = (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type });
 
@@ -117,6 +114,19 @@ async function journal(params, selectedOrg, options = {}) {
     },
     matchesDraft,
   }, options.draft ? options : { ...options, skipDraftSearch: true });
+}
+
+async function sport(params, selectedOrg, options = {}) {
+  return await typedJournal(params, selectedOrg ?? "personal", "sport", options);
+}
+
+async function reflection(params, selectedOrg, options = {}) {
+  return await typedJournal(params, selectedOrg ?? await chooseOrg(params), "reflection", options);
+}
+
+async function typedJournal(params, org, type, options) {
+  const isDraft = options.draft ?? ((await choose(params, ["now", "draft"], ["now", "draft"], "mode?")) === "draft");
+  return await journal(params, org, { ...options, type, draft: isDraft });
 }
 
 async function person(params, selectedOrg, options = {}) {

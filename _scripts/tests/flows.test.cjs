@@ -303,14 +303,43 @@ test('exports are synchronous and missing runtime fails before creating content'
 
 test('QuickAdd event journals go straight to title in now and draft modes', async () => {
   for (const mode of ['now', 'draft']) {
-    const f = fixture([], ['work', mode, 'journal', 'event', 'Visit']);
+    const f = fixture([], ['work', mode, 'journal', 'Visit']);
     f.template('Journal');
     await f.load('_scripts/quickadd/journal.md').entry(f);
-    assert.deepEqual(f.prompts, ['org?', 'mode?', 'where?', 'type?', 'title?']);
+    assert.deepEqual(f.prompts, ['org?', 'mode?', 'where?', 'title?']);
     const name = mode === 'draft' ? 'Draft Visit' : '2026-09-20 12-00 Visit';
     const file = f.files.get(`work/journal/${name}.md`);
     assert.ok(file);
     assert.match(file.content, /attendees: \[\]/);
     assert.match(file.content, /type: event/);
+  }
+});
+
+test('Sport and Reflection shortcuts choose type without asking, including draft activation', async () => {
+  for (const type of ['sport', 'reflection']) {
+    const org = type === 'sport' ? 'personal' : 'work';
+    const orgAnswers = type === 'sport' ? [] : [org];
+    const f = fixture([], [...orgAnswers, 'draft', 'Session', ...orgAnswers, 'now', 'use draft: Draft Session']);
+    f.template('Journal');
+    const script = f.load('_scripts/quickadd/journal.md');
+    await script.entry(f, { flow: type });
+    const draft = f.files.get(`${org}/journal/Draft Session.md`);
+    assert.match(draft.content, new RegExp(`type: ${type}`));
+    draft.fm = { org, category: 'journal', type, created: '2026-09-20T12:00' };
+    await script.entry(f, { flow: type });
+    assert.ok(f.files.has(`${org}/journal/2026-09-20 12-00 Session.md`));
+    assert.ok(!f.prompts.includes('type?'));
+    assert.equal(f.prompts.filter(p => p === 'title?').length, 1);
+  }
+});
+
+test('public QuickAdd config registers distinct Sport and Reflection commands', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, '.obsidian/plugins/quickadd/data.example.json'), 'utf8'));
+  assert.equal(new Set(config.choices.map(c => c.id)).size, config.choices.length);
+  for (const name of ['Sport', 'Reflection']) {
+    const choice = config.choices.find(c => c.name === name);
+    assert.equal(choice.command, true);
+    assert.equal(choice.macro.commands[0].settings.flow, name.toLowerCase());
+    assert.equal(choice.macro.commands[0].path, '_scripts/quickadd/journal.md');
   }
 });

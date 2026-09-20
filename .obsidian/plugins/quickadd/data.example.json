@@ -87,6 +87,42 @@
       }
     },
     {
+      "id": "journal-sport",
+      "name": "Sport",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "id": "journal-sport",
+        "name": "Sport",
+        "commands": [{
+          "id": "journal-sport-script-1",
+          "name": "Sport",
+          "type": "UserScript",
+          "path": "_scripts/quickadd/journal.md",
+          "settings": { "flow": "sport" }
+        }]
+      }
+    },
+    {
+      "id": "journal-reflection",
+      "name": "Reflection",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "id": "journal-reflection",
+        "name": "Reflection",
+        "commands": [{
+          "id": "journal-reflection-script-1",
+          "name": "Reflection",
+          "type": "UserScript",
+          "path": "_scripts/quickadd/journal.md",
+          "settings": { "flow": "reflection" }
+        }]
+      }
+    },
+    {
       "id": "note",
       "name": "Note",
       "type": "Macro",
