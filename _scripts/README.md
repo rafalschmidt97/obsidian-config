@@ -34,7 +34,8 @@ adding an org requires updating those regexes as well as creating its folders.
 ## QuickAdd menu
 
 Frequent captures stay at the top level. `Entities` groups Person, Meeting, Project,
-and Team profile creation. `System` holds Daily, the Weekly submenu, Tasks, and the two startup refreshes.
+Team, Book, Place, and Trip creation. `System` holds Daily, the Weekly submenu, Tasks, and the two startup refreshes.
+The final two top-level entries are `📁 Entities` and `⚙ System`, in that order.
 Use native periodic-note tooling for normal daily/weekly access; QuickAdd keeps secondary utilities.
 Nested choices keep their original IDs and command flags so existing shortcuts
 continue to work. Apply menu edits to the private `quickadd/data.json` and the public

@@ -1050,7 +1050,7 @@ These enable faceted navigation — open a base, switch to the view you want.
 
 ### Pattern: Generated Markdown Views
 
-QuickAdd navigation groups rarely used Person, Meeting, Project, and Team creation under `Entities`. Daily, the Weekly submenu, and Tasks live under `System` alongside startup refreshes. Native periodic-note tooling is the normal entry point for daily and weekly notes; QuickAdd retains secondary utilities. Other capture choices stay at the top level; nested choices retain their IDs and command registrations.
+QuickAdd navigation groups rarely used Person, Meeting, Project, Team, Book, Place, and Trip creation under `📁 Entities`. It sits at the bottom of the top-level menu, immediately before `⚙ System`. Daily, the Weekly submenu, and Tasks live under System alongside startup refreshes. Native periodic-note tooling is the normal entry point for daily and weekly notes; QuickAdd retains secondary utilities. Other capture choices stay at the top level; nested choices retain their IDs and command registrations.
 
 Task-source categories are `weekly`, `journal`, `project`, and `book`. Project-profile `## Tasks` items are included in all three snapshots under `Project Tasks` when non-empty, with the same completion, archive, `#prio`, and `#wl` rules as the other sources. References to weekly/journal/book sources below also include project profiles.
 
