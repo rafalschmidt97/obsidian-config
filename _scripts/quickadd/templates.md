@@ -155,12 +155,15 @@ async function note(params) {
 // notes identically. Returns null when a required sub-selection is unavailable.
 async function noteRouteFor(params, org, destination) {
   const lines = [];
+  const frontmatter = {};
   let targetFolder = "";
 
   if (destination === "notes") {
     const selected = await chooseNoteFolder(params, org);
     targetFolder = selected.path;
     if (selected.topic) {
+      frontmatter.topic = selected.topic;
+      if (selected.topic === "references" || selected.topic.startsWith("references/")) frontmatter.type = "reference";
       if (selected.topic === "references" || selected.topic.startsWith("references/")) lines.push({ key: "typeLine", value: "type: reference" });
       lines.push({ key: "topicLine", value: `topic: "${selected.topic}"` });
     }
@@ -168,25 +171,31 @@ async function noteRouteFor(params, org, destination) {
     const selected = await chooseMeeting(params, org);
     targetFolder = selected.path;
     lines.push({ key: "relationshipLines", value: relationshipLines({ meeting: selected.name, project: selected.project, team: selected.team }) });
+    frontmatter.meeting = `[[${selected.name}]]`;
+    if (selected.project) frontmatter.project = `[[${selected.project}]]`;
+    if (selected.team) frontmatter.team = `[[${selected.team}]]`;
   } else if (destination === "projects") {
     const selected = await chooseProject(params, org);
     targetFolder = selected.path;
     lines.push({ key: "relationshipLines", value: `project: "[[${selected.name}]]"` });
+    frontmatter.project = `[[${selected.name}]]`;
   } else if (destination === "people") {
     const name = await chooseFolderName(params, `${org}/people`, "person?");
     if (!name) return null;
     targetFolder = `${org}/people/${name}`;
     lines.push({ key: "relationshipLines", value: `attendees: ["[[${name}]]"]` });
+    frontmatter.attendees = [`[[${name}]]`];
   } else if (destination === "teams") {
     const name = await chooseFolderName(params, `${org}/teams`, "team?");
     if (!name) return null;
     targetFolder = `${org}/teams/${name}`;
     lines.push({ key: "relationshipLines", value: `team: "[[${name}]]"` });
+    frontmatter.team = `[[${name}]]`;
   } else {
     throw new Error(`Unknown note destination: ${destination}`);
   }
 
-  return { targetFolder, lines };
+  return { targetFolder, lines, frontmatter };
 }
 
 // Triage entry point: list every inbox note (newest first). Pick one, then choose an action —
@@ -222,8 +231,8 @@ async function moveInboxNote(params, source) {
   const title = await requiredInput(params, "title?");
   const targetPath = await uniqueMarkdownPath(params, `${route.targetFolder}/${safeFilename(title)}`);
 
-  await retagInboxNote(params, source, org, route.lines);
   await ensureFolder(params, targetPath.split("/").slice(0, -1).join("/"));
+  await retagInboxNote(params, source, org, route.frontmatter);
   await env(params).app.fileManager.renameFile(source, targetPath);
   return await openFile(params, source);
 }
@@ -942,37 +951,17 @@ function findInboxNotes(params) {
   return results.sort((a, b) => b.created.localeCompare(a.created));
 }
 
-// Reframe an inbox note for triage: rebuild its frontmatter from _templates/Note.md in canonical
-// field order (org, category, created, type, topic, relationships), dropping type: inbox. Preserves
-// the original created value (capture time) and the existing note body verbatim. Rebuilding from the
-// template — rather than mutating in place — guarantees a triaged note is byte-identical in shape to
-// a freshly created note, instead of leaving topic/type appended after created.
-async function retagInboxNote(params, file, org, lines) {
+// Update route-owned fields atomically. Other metadata and the body belong to the user.
+async function retagInboxNote(params, file, org, routeFrontmatter) {
   const { app } = env(params);
-  const raw = await app.vault.read(file);
-  const existing = getFrontmatter(params, file) || {};
-  const created = existing.created ? String(existing.created) : env(params).quickAddApi.date.now("YYYY-MM-DDTHH:mm");
-  const body = stripFrontmatter(raw);
-  const template = await readVaultFile(params, TEMPLATE.note);
-  const content = render(template, {
-    org,
-    created,
-    typeLine: valueFor(lines, "typeLine"),
-    topicLine: valueFor(lines, "topicLine"),
-    relationshipLines: valueFor(lines, "relationshipLines"),
-    body,
+  await app.fileManager.processFrontMatter(file, (frontmatter) => {
+    frontmatter.org = org;
+    frontmatter.category = "note";
+    if (!frontmatter.created) frontmatter.created = env(params).quickAddApi.date.now("YYYY-MM-DDTHH:mm");
+    if (frontmatter.type === "inbox") delete frontmatter.type;
+    delete frontmatter.topic;
+    Object.assign(frontmatter, routeFrontmatter);
   });
-  await app.vault.modify(file, content);
-}
-
-// Returns everything after the leading YAML frontmatter block (body only), with leading blank
-// lines trimmed so the rebuilt note has the same single blank line after frontmatter as a freshly
-// created note. If there is no frontmatter, returns the content unchanged.
-function stripFrontmatter(content) {
-  if (!content.startsWith("---\n")) return content;
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return content;
-  return content.slice(end + 4).replace(/^(\r?\n)+/, "");
 }
 
 function findMeetingFolders(params, rootPath) {

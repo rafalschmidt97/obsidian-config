@@ -494,7 +494,7 @@ Triage is the counterpart to capture: it clears the inbox by routing rough notes
 
 1. **Same routing as note creation.** `move` reuses the Note flow's route resolver, so a triaged note lands with the same frontmatter a freshly created note would have for that route: `topic` for a notes folder, `type: reference` under `references/...`, or the matching relationship field (`meeting`/`project`/`team`/`attendees`) for a context folder.
 2. **Title is required.** Leaving the inbox is when a rough note earns a real name, so `move` asks `title?` and renames the file from its timestamp to `{title}.md`.
-3. **`type: inbox` is dropped; `created` is preserved.** The note is reframed from `_templates/Note.md`, so it is byte-identical in shape to a created note, but the original `created` (capture time) is kept rather than reset — triage is not a new creation, just a relocation. The note body is carried over verbatim.
+3. **Metadata is preserved.** Triage updates frontmatter in place using `processFrontMatter`: it sets `org` and `category: note`, drops `type: inbox`, replaces/removes `topic` according to the destination, and sets destination relationship fields. Other properties (including aliases, custom fields, and unrelated relationships), the original `created`, and the body are preserved. A non-inbox `type` is retained unless the destination requires `reference`. YAML formatting may be normalized by Obsidian.
 4. **Triage is note-only.** `move` routes into note destinations (`notes`, `meetings`, `projects`, `people`, `teams`). Promoting an inbox item to a different category (journal, clipping, book, etc.) is a manual conversion, not part of this flow.
 
 ### Archive

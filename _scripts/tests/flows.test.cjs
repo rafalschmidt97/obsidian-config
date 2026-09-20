@@ -45,6 +45,13 @@ function fixture(seeds = [], answers = []) {
       openLinkText: async p => opened.push(p),
     },
     fileManager: {
+      processFrontMatter: async (f, update) => {
+        // Model the documented API contract: mutate properties, preserve everything after YAML.
+        const match = /^---\r?\n[\s\S]*?\r?\n---/.exec(f.content);
+        const body = match ? f.content.slice(match[0].length) : `\n\n${f.content}`;
+        update(f.fm);
+        f.content = `---\n${JSON.stringify(f.fm, null, 2)}\n---${body}`;
+      },
       renameFile: async (f, p) => {
         assert.ok(!files.has(p), `collision: ${p}`);
         files.delete(f.path);
@@ -144,4 +151,32 @@ test('mixed topic folders ask note or invoice; dedicated invoices stay automatic
       assert.equal(f.prompts.includes('category?'), !topic.endsWith('/invoices'));
     }
   }
+});
+
+test('triage preserves custom metadata, capture time and exact body while changing route', async () => {
+  const body = '\n\n\n## Draft\n\nText with [[links]].\n';
+  const fm = { org: 'personal', category: 'note', type: 'inbox', topic: 'old', created: '2026-01-02T09:15',
+    aliases: ['Original'], source: 'https://example.org', custom: { nested: ['keep', 42] }, project: '[[Alpha]]' };
+  const f = fixture([['personal/inbox/Capture.md', `---\norg: personal\n---${body}`, fm]],
+    ['personal/ Capture', 'move', 'work', 'notes', 'references', 'Knowledge']);
+  f.folder('work/notes/references');
+  await f.load('_scripts/quickadd/templates.md').entry(f, { flow: 'triage' });
+  const moved = f.files.get('work/notes/references/Knowledge.md');
+  assert.ok(moved);
+  assert.equal(moved.fm.org, 'work'); assert.equal(moved.fm.type, 'reference'); assert.equal(moved.fm.topic, 'references');
+  assert.equal(moved.fm.created, '2026-01-02T09:15');
+  assert.deepEqual(moved.fm.aliases, ['Original']); assert.deepEqual(moved.fm.custom, { nested: ['keep', 42] });
+  assert.equal(moved.fm.source, 'https://example.org'); assert.equal(moved.fm.project, '[[Alpha]]');
+  assert.equal(moved.content.slice(moved.content.indexOf('\n---') + 4), body);
+});
+
+test('triage to a project clears inbox type and old topic but preserves unrelated fields', async () => {
+  const f = fixture([['personal/inbox/Capture.md', 'Body', { type: 'inbox', topic: 'old', aliases: ['Keep'] }]],
+    ['personal/ Capture', 'move', 'work', 'projects', 'Alpha', 'Plan']);
+  f.folder('work/projects/Alpha');
+  await f.load('_scripts/quickadd/templates.md').entry(f, { flow: 'triage' });
+  const fm = f.files.get('work/projects/Alpha/Plan.md').fm;
+  assert.equal(fm.type, undefined); assert.equal(fm.topic, undefined);
+  assert.equal(fm.project, '[[Alpha]]'); assert.equal(fm.created, '2026-09-20T12:00');
+  assert.deepEqual(fm.aliases, ['Keep']);
 });
