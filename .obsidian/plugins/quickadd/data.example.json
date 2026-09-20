@@ -396,81 +396,6 @@
       }
     },
     {
-      "id": "weekly-menu",
-      "name": "Weekly",
-      "type": "Multi",
-      "command": false,
-      "runOnStartup": false,
-      "choices": [
-        {
-          "id": "weekly",
-          "name": "Create Weekly",
-          "type": "Macro",
-          "command": true,
-          "runOnStartup": false,
-          "macro": {
-            "id": "weekly",
-            "name": "Create Weekly",
-            "commands": [
-              {
-                "id": "weekly-script-1",
-                "name": "Create Weekly",
-                "type": "UserScript",
-                "path": "_scripts/quickadd/templates.md",
-                "settings": {
-                  "flow": "weekly"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "open-work-weekly",
-          "name": "Open Work Weekly",
-          "type": "Macro",
-          "command": true,
-          "runOnStartup": false,
-          "macro": {
-            "id": "open-work-weekly",
-            "name": "Open Work Weekly",
-            "commands": [
-              {
-                "id": "open-work-weekly-script-1",
-                "name": "Open Work Weekly",
-                "type": "UserScript",
-                "path": "_scripts/quickadd/Open Weekly.md",
-                "settings": {
-                  "org": "work"
-                }
-              }
-            ]
-          }
-        },
-        {
-          "id": "open-personal-weekly",
-          "name": "Open Personal Weekly",
-          "type": "Macro",
-          "command": true,
-          "runOnStartup": false,
-          "macro": {
-            "id": "open-personal-weekly",
-            "name": "Open Personal Weekly",
-            "commands": [
-              {
-                "id": "open-personal-weekly-script-1",
-                "name": "Open Personal Weekly",
-                "type": "UserScript",
-                "path": "_scripts/quickadd/Open Weekly.md",
-                "settings": {
-                  "org": "personal"
-                }
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
       "id": "monthly-reflection",
       "name": "Monthly Reflection",
       "type": "Macro",
@@ -543,6 +468,69 @@
             ]
           }
         },
+    {
+      "id": "weekly-menu",
+      "name": "Weekly",
+      "type": "Multi",
+      "command": false,
+      "runOnStartup": false,
+      "choices": [
+        {
+          "id": "weekly",
+          "name": "Create Weekly",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "weekly",
+            "name": "Create Weekly",
+            "commands": [{
+              "id": "weekly-script-1",
+              "name": "Create Weekly",
+              "type": "UserScript",
+              "path": "_scripts/quickadd/templates.md",
+              "settings": { "flow": "weekly" }
+            }]
+          }
+        },
+        {
+          "id": "open-work-weekly",
+          "name": "Open Work Weekly",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "open-work-weekly",
+            "name": "Open Work Weekly",
+            "commands": [{
+              "id": "open-work-weekly-script-1",
+              "name": "Open Work Weekly",
+              "type": "UserScript",
+              "path": "_scripts/quickadd/Open Weekly.md",
+              "settings": { "org": "work" }
+            }]
+          }
+        },
+        {
+          "id": "open-personal-weekly",
+          "name": "Open Personal Weekly",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "open-personal-weekly",
+            "name": "Open Personal Weekly",
+            "commands": [{
+              "id": "open-personal-weekly-script-1",
+              "name": "Open Personal Weekly",
+              "type": "UserScript",
+              "path": "_scripts/quickadd/Open Weekly.md",
+              "settings": { "org": "personal" }
+            }]
+          }
+        }
+      ]
+    },
     {
       "id": "action-points",
       "name": "Tasks",
