@@ -1,7 +1,7 @@
 // Raw JavaScript stored as .md so Obsidian Sync includes it on mobile.
 // Generated-view maintenance script (peer to journal.md / templates.md): regenerates
 // {org}/bases/{Org} Tasks.md, {Org} Priority.md, and {Org} Wishlist.md from open checklist items in
-// the `## Tasks` section of weekly notes, journals, and books (books are personal-only). A `#wl`
+// the `## Tasks` section of weekly notes, journals, projects, and books (books are personal-only). A `#wl`
 // marker diverts an item to the Wishlist backlog (out of Tasks); a `#prio` marker additionally lists
 // it in Priority (a focused subset — it stays in Tasks). Source notes are the source of truth; these
 // files are read-only snapshots.
@@ -26,9 +26,9 @@ const stripWishlist = (text) => text
   .replace(/(?:^|\s)#wl(?![\w/-])/ig, " ")
   .replace(/\s{2,}/g, " ")
   .trim();
-const TASKS_INTRO = "Weekly notes, journals, and books are the source of truth. Edit tasks in the source note; this file is regenerated and does not sync checkbox changes back.";
-const PRIORITY_INTRO = "Focused view of `#prio`-tagged open tasks from the same `## Tasks` sections in weekly notes, journals, and books — these also remain in Tasks. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#prio` tag in the source to drop an item from Priority.";
-const WISHLIST_INTRO = "Backlog of `#wl`-tagged items pulled from the same `## Tasks` sections in weekly notes, journals, and books — later / someday, not active work. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#wl` tag in the source to promote an item back to Tasks.";
+const TASKS_INTRO = "Weekly notes, journals, projects, and books are the source of truth. Edit tasks in the source note; this file is regenerated and does not sync checkbox changes back.";
+const PRIORITY_INTRO = "Focused view of `#prio`-tagged open tasks from the same `## Tasks` sections in weekly notes, journals, projects, and books — these also remain in Tasks. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#prio` tag in the source to drop an item from Priority.";
+const WISHLIST_INTRO = "Backlog of `#wl`-tagged items pulled from the same `## Tasks` sections in weekly notes, journals, projects, and books — later / someday, not active work. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#wl` tag in the source to promote an item back to Tasks.";
 
 module.exports = {
   entry,
@@ -101,21 +101,25 @@ async function refreshViews(params, org) {
   const generatedAt = quickAddApi.date.now("YYYY-MM-DDTHH:mm");
   const weekly = await collectGroups(params, org, "weekly", "Tasks");
   const journal = await collectGroups(params, org, "journal", "Tasks");
+  const project = await collectGroups(params, org, "project", "Tasks");
   const book = await collectGroups(params, org, "book", "Tasks");
 
   await writeView(params, tasksPathForOrg(org), renderSnapshot(org, generatedAt, "Tasks", TASKS_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.actionGroups, empty: "No open weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.actionGroups, empty: "No open journal tasks found." },
+    ...(project.actionGroups.length ? [{ heading: "Project Tasks", groups: project.actionGroups, empty: "" }] : []),
     ...(book.actionGroups.length ? [{ heading: "Book Tasks", groups: book.actionGroups, empty: "" }] : []),
   ]));
   await writeView(params, priorityPathForOrg(org), renderSnapshot(org, generatedAt, "Priority", PRIORITY_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.priorityGroups, empty: "No priority weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.priorityGroups, empty: "No priority journal tasks found." },
+    ...(project.priorityGroups.length ? [{ heading: "Project Tasks", groups: project.priorityGroups, empty: "" }] : []),
     ...(book.priorityGroups.length ? [{ heading: "Book Tasks", groups: book.priorityGroups, empty: "" }] : []),
   ]));
   await writeView(params, wishlistPathForOrg(org), renderSnapshot(org, generatedAt, "Wishlist", WISHLIST_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.wishlistGroups, empty: "No wishlist weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.wishlistGroups, empty: "No wishlist journal tasks found." },
+    ...(project.wishlistGroups.length ? [{ heading: "Project Tasks", groups: project.wishlistGroups, empty: "" }] : []),
     ...(book.wishlistGroups.length ? [{ heading: "Book Tasks", groups: book.wishlistGroups, empty: "" }] : []),
   ]));
 }

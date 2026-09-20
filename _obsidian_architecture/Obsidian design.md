@@ -1036,6 +1036,8 @@ These enable faceted navigation — open a base, switch to the view you want.
 
 ### Pattern: Generated Markdown Views
 
+Task-source categories are `weekly`, `journal`, `project`, and `book`. Project-profile `## Tasks` items are included in all three snapshots under `Project Tasks` when non-empty, with the same completion, archive, `#prio`, and `#wl` rules as the other sources. References to weekly/journal/book sources below also include project profiles.
+
 Some cross-cutting views need body-level extraction, not note-level property queries. Keep those as generated Markdown files in `{org}/bases/`, not `.base` files. The generator should:
 
 1. Filter source notes by frontmatter properties such as `org`, `category`, and `status`.
