@@ -11,7 +11,7 @@ module.exports = Object.fromEntries(["entry", "journal", "generic", "draft", "fu
 async function createFlows(shared) {
 const { render, readVaultFile, ensureFolder, uniqueMarkdownPath, openFile, renameFile,
   safeFilename, isFolder, getFrontmatter, findMeetingFolders, findProjectFolders,
-  runBackable, choose, requiredInput, notice, formatWikilinkList,
+  runBackable, choose, requiredInput, notice,
   orgFolders, journalMatchesDraft, folderNames, relationshipLines } = shared;
 const TEMPLATE_DIR = "_templates";
 
@@ -103,7 +103,6 @@ async function journal(params, selectedOrg, options = {}) {
     }
   }
 
-  const attendees = type === "event" ? await optionalAttendees(params) : [];
   const title = await requiredInput(params, "title?");
 
   return await createOrActivateJournal(params, {
@@ -114,7 +113,7 @@ async function journal(params, selectedOrg, options = {}) {
     values: {
       org,
       typeLine: type ? `type: ${type}` : "",
-      attendeesLine: formatWikilinkList("attendees", attendees),
+      attendeesLine: type === "event" ? "attendees: []" : "",
     },
     matchesDraft,
   }, options.draft ? options : { ...options, skipDraftSearch: true });
@@ -342,13 +341,6 @@ async function createFromTemplate(params, templatePath, targetPathWithoutExtensi
   await app.workspace.getLeaf().openFile(file);
   notice(`Created ${label}: ${targetPath}`);
   return file;
-}
-
-async function optionalAttendees(params) {
-  const { quickAddApi } = env(params);
-  const value = await quickAddApi.inputPrompt("attendees? optional, comma-separated");
-  if (!value || !value.trim()) return [];
-  return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
 
 function journalModeValues(params, mode) {

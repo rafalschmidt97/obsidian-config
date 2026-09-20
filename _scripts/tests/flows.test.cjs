@@ -300,3 +300,17 @@ test('exports are synchronous and missing runtime fails before creating content'
     assert.equal(f.files.size, count);
   }
 });
+
+test('QuickAdd event journals go straight to title in now and draft modes', async () => {
+  for (const mode of ['now', 'draft']) {
+    const f = fixture([], ['work', mode, 'journal', 'event', 'Visit']);
+    f.template('Journal');
+    await f.load('_scripts/quickadd/journal.md').entry(f);
+    assert.deepEqual(f.prompts, ['org?', 'mode?', 'where?', 'type?', 'title?']);
+    const name = mode === 'draft' ? 'Draft Visit' : '2026-09-20 12-00 Visit';
+    const file = f.files.get(`work/journal/${name}.md`);
+    assert.ok(file);
+    assert.match(file.content, /attendees: \[\]/);
+    assert.match(file.content, /type: event/);
+  }
+});
