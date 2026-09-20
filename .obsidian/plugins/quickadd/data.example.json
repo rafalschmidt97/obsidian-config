@@ -23,50 +23,6 @@
       }
     },
     {
-      "id": "triage",
-      "name": "Triage",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "triage",
-        "name": "Triage",
-        "commands": [
-          {
-            "id": "triage-script-1",
-            "name": "Triage",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "triage"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "id": "archive",
-      "name": "Archive",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "archive",
-        "name": "Archive",
-        "commands": [
-          {
-            "id": "archive-script-1",
-            "name": "Archive",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "archive"
-            }
-          }
-        ]
-      }
-    },
-    {
       "id": "journal",
       "name": "Journal",
       "type": "Macro",
@@ -275,6 +231,27 @@
           }
         ]
       }
+    },
+    {
+      "id": "actions-menu",
+      "name": "⚡ Actions",
+      "type": "Multi",
+      "command": false,
+      "runOnStartup": false,
+      "choices": [
+        {
+          "id": "triage", "name": "Triage", "type": "Macro", "command": true, "runOnStartup": false,
+          "macro": { "id": "triage", "name": "Triage", "commands": [
+            { "id": "triage-script-1", "name": "Triage", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "triage" } }
+          ] }
+        },
+        {
+          "id": "archive", "name": "Archive", "type": "Macro", "command": true, "runOnStartup": false,
+          "macro": { "id": "archive", "name": "Archive", "commands": [
+            { "id": "archive-script-1", "name": "Archive", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "archive" } }
+          ] }
+        }
+      ]
     },
     {
       "id": "entities-menu",

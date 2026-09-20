@@ -345,26 +345,30 @@ test('public QuickAdd config registers distinct Sport and Reflection commands', 
 test('QuickAdd menu nests entity creation and Tasks without losing existing commands', () => {
   const config = JSON.parse(fs.readFileSync(path.join(root, '.obsidian/plugins/quickadd/data.example.json'), 'utf8'));
   const rootIds = config.choices.map(c => c.id);
+  const actions = config.choices.find(c => c.id === 'actions-menu');
+  assert.equal(actions.type, 'Multi');
+  assert.equal(actions.name, '⚡ Actions');
+  assert.deepEqual(actions.choices.map(c => c.id), ['triage', 'archive']);
   const entities = config.choices.find(c => c.id === 'entities-menu');
   assert.equal(entities.type, 'Multi');
   assert.equal(entities.name, '📁 Entities');
   assert.deepEqual(entities.choices.map(c => c.id), ['person', 'meeting', 'project', 'team', 'book', 'place', 'trip']);
   const system = config.choices.find(c => c.id === 'system-menu');
   assert.deepEqual(system.choices.map(c => c.id), ['daily', 'weekly-menu', 'action-points', 'action-points-startup', 'periodic-startup']);
-  for (const id of ['person', 'meeting', 'project', 'team', 'book', 'place', 'trip', 'daily', 'weekly-menu', 'action-points']) assert.ok(!rootIds.includes(id));
+  for (const id of ['triage', 'archive', 'person', 'meeting', 'project', 'team', 'book', 'place', 'trip', 'daily', 'weekly-menu', 'action-points']) assert.ok(!rootIds.includes(id));
   const flatten = choices => choices.flatMap(c => [c, ...flatten(c.choices || [])]);
   const all = flatten(config.choices);
   assert.equal(new Set(all.map(c => c.id)).size, all.length);
   assert.equal(all.filter(c => c.type === 'Macro').length, 27);
   assert.equal(all.filter(c => c.runOnStartup).length, 2);
-  assert.deepEqual(rootIds, ['inbox', 'triage', 'archive', 'journal', 'journal-sport', 'journal-reflection',
+  assert.deepEqual(rootIds, ['inbox', 'journal', 'journal-sport', 'journal-reflection',
     'note', 'clipping', 'invoice', 'document', 'transcript',
-    'monthly-reflection', 'meal-plan', 'entities-menu', 'system-menu']);
+    'monthly-reflection', 'meal-plan', 'actions-menu', 'entities-menu', 'system-menu']);
   const localPath = path.join(root, '.obsidian/plugins/quickadd/data.json');
   if (fs.existsSync(localPath)) {
     const local = JSON.parse(fs.readFileSync(localPath, 'utf8'));
     assert.deepEqual(local.choices.map(c => c.id), rootIds);
-    for (const id of ['entities-menu', 'system-menu']) {
+    for (const id of ['actions-menu', 'entities-menu', 'system-menu']) {
       const actual = local.choices.find(c => c.id === id);
       const expected = config.choices.find(c => c.id === id);
       // Org-specific weekly shortcuts intentionally differ in private configuration.
