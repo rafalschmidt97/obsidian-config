@@ -145,6 +145,13 @@
       }
     },
     {
+      "id": "entities-menu",
+      "name": "Entities",
+      "type": "Multi",
+      "command": false,
+      "runOnStartup": false,
+      "choices": [
+    {
       "id": "person",
       "name": "Person",
       "type": "Macro",
@@ -231,6 +238,8 @@
           }
         ]
       }
+    }
+      ]
     },
     {
       "id": "book",
@@ -528,6 +537,13 @@
       }
     },
     {
+      "id": "system-menu",
+      "name": "⚙ System",
+      "type": "Multi",
+      "command": false,
+      "runOnStartup": false,
+      "choices": [
+    {
       "id": "action-points",
       "name": "Tasks",
       "type": "Macro",
@@ -549,13 +565,6 @@
         ]
       }
     },
-    {
-      "id": "system-menu",
-      "name": "⚙ System",
-      "type": "Multi",
-      "command": false,
-      "runOnStartup": false,
-      "choices": [
         {
           "id": "action-points-startup",
           "name": "Tasks (startup refresh)",

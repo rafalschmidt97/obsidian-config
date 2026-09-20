@@ -342,6 +342,33 @@ test('public QuickAdd config registers distinct Sport and Reflection commands', 
   }
 });
 
+test('QuickAdd menu nests entity creation and Tasks without losing existing commands', () => {
+  const config = JSON.parse(fs.readFileSync(path.join(root, '.obsidian/plugins/quickadd/data.example.json'), 'utf8'));
+  const rootIds = config.choices.map(c => c.id);
+  const entities = config.choices.find(c => c.id === 'entities-menu');
+  assert.equal(entities.type, 'Multi');
+  assert.deepEqual(entities.choices.map(c => c.id), ['person', 'meeting', 'project', 'team']);
+  const system = config.choices.find(c => c.id === 'system-menu');
+  assert.deepEqual(system.choices.map(c => c.id), ['action-points', 'action-points-startup', 'periodic-startup']);
+  for (const id of ['person', 'meeting', 'project', 'team', 'action-points']) assert.ok(!rootIds.includes(id));
+  const flatten = choices => choices.flatMap(c => [c, ...flatten(c.choices || [])]);
+  const all = flatten(config.choices);
+  assert.equal(new Set(all.map(c => c.id)).size, all.length);
+  assert.equal(all.filter(c => c.type === 'Macro').length, 27);
+  assert.equal(all.filter(c => c.runOnStartup).length, 2);
+  assert.deepEqual(rootIds, ['inbox', 'triage', 'archive', 'journal', 'journal-sport', 'journal-reflection',
+    'note', 'entities-menu', 'book', 'clipping', 'invoice', 'document', 'place', 'trip', 'transcript',
+    'daily', 'weekly-menu', 'monthly-reflection', 'meal-plan', 'system-menu']);
+  const localPath = path.join(root, '.obsidian/plugins/quickadd/data.json');
+  if (fs.existsSync(localPath)) {
+    const local = JSON.parse(fs.readFileSync(localPath, 'utf8'));
+    assert.deepEqual(local.choices.map(c => c.id), rootIds);
+    for (const id of ['entities-menu', 'system-menu']) {
+      assert.deepEqual(local.choices.find(c => c.id === id), config.choices.find(c => c.id === id));
+    }
+  }
+});
+
 test('sport capture embeds history through QuickAdd and folder-click', async () => {
   for (const mode of ['quickadd', 'templater']) {
     const f = fixture([], mode === 'quickadd' ? ['Training'] : ['now', 'sport', 'Training']);

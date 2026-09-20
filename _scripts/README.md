@@ -31,6 +31,14 @@ Real org names and household settings belong in ignored `config/*.json` files, w
 generic examples committed. The Templater path regexes are still device configuration;
 adding an org requires updating those regexes as well as creating its folders.
 
+## QuickAdd menu
+
+Frequent captures stay at the top level. `Entities` groups Person, Meeting, Project,
+and Team profile creation. `System` holds Tasks and the two startup refreshes.
+Nested choices keep their original IDs and command flags so existing shortcuts
+continue to work. Apply menu edits to the private `quickadd/data.json` and the public
+`data.example.json` separately; preserve private org settings in the former.
+
 ## Verification
 
 Run `node --test _scripts/tests/flows.test.cjs` from the vault root. The in-memory vault
