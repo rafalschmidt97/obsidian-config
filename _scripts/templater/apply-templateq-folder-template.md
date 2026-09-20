@@ -12,37 +12,13 @@ const parts = folder.split("/").filter(Boolean);
 const org = parts[0];
 const currentTitle = tp.file.title.startsWith("Untitled") ? "" : tp.file.title;
 const created = tp.date.now("YYYY-MM-DDTHH:mm");
-const IGNORED_ORG_FOLDERS = new Set(["archive", "daily"]);
-
-const safeFilename = (value) => String(value).replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
-const renderTemplate = async (templatePath, values) => {
-  const templateFile = app.vault.getAbstractFileByPath(templatePath);
-  if (!templateFile) throw new Error(`Template not found: ${templatePath}`);
-
-  const template = await app.vault.cachedRead(templateFile);
-  const rendered = template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? "");
-  if (!rendered.startsWith("---\n")) return rendered;
-
-  const end = rendered.indexOf("\n---", 4);
-  if (end === -1) return rendered;
-
-  const frontmatter = rendered.slice(4, end)
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .join("\n");
-
-  return `---\n${frontmatter}${rendered.slice(end)}`;
-};
-const ensureFolder = async (path) => {
-  const segments = path.split("/").filter(Boolean);
-  let current = "";
-  for (const segment of segments) {
-    current = current ? `${current}/${segment}` : segment;
-    if (!app.vault.getAbstractFileByPath(current)) {
-      try { await app.vault.createFolder(current); } catch (e) {}
-    }
-  }
-};
+const runtimeFile = app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
+if (!runtimeFile) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
+const runtime = new Function("module", `${await app.vault.read(runtimeFile)}\nreturn module.exports;`)({ exports: {} });
+const shared = await runtime.create(app);
+const { safeFilename, relationshipLines, detailsBlock, orgFolders } = shared;
+const renderTemplate = async (path, values) => shared.render(await shared.readVaultFile({ app }, path), values);
+const ensureFolder = path => shared.ensureFolder({ app }, path);
 const moveOrOpen = async (targetPath) => {
   const targetFile = app.vault.getAbstractFileByPath(`${targetPath}.md`);
   if (targetFile && currentPath !== `${targetPath}.md`) {
@@ -60,54 +36,7 @@ const prompt = async (label, defaultValue = currentTitle, required = true) => {
   const value = await tp.system.prompt(label, defaultValue, required);
   return value ? value.trim() : "";
 };
-const nearestContext = (marker, beforeIndex) => {
-  for (let index = Math.min(beforeIndex, parts.length - 1); index >= 0; index--) {
-    if (parts[index] === marker) return parts[index + 1] || "";
-  }
-  return "";
-};
-const relationshipLines = ({ meeting, project, team }) => [
-  meeting ? `meeting: "[[${meeting}]]"` : "",
-  project ? `project: "[[${project}]]"` : "",
-  team ? `team: "[[${team}]]"` : "",
-].filter(Boolean).join("\n");
-const detailsBlock = () => `## Details\n\n| | |\n|---|---|\n| Teams | |\n| Supervisor | |\n| Email | |\n| GitHub | |\n| Mobile | |\n| Board | |\n`;
-const fmt = (dateValue) => {
-  const d = new Date(dateValue);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-const offsetDays = (dateValue, days) => {
-  const result = new Date(dateValue);
-  result.setDate(result.getDate() + days);
-  return result;
-};
-const weekRange = (dateValue) => {
-  const current = new Date(dateValue);
-  const day = current.getDay();
-  const diffToMon = day === 0 ? -6 : 1 - day;
-  const monday = new Date(current);
-  monday.setDate(current.getDate() + diffToMon);
-  const sunday = offsetDays(monday, 6);
-  const nextMonday = offsetDays(monday, 7);
-  return { monday, start: fmt(monday), end: fmt(nextMonday), shortEnd: fmt(sunday).slice(5) };
-};
-const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
-// Name-free ordering: alphabetical, with "personal" always last. Active org folders are the
-// source of truth, so no org names are hardcoded here.
-const sortOrgNames = (a, b) => {
-  if ((a === "personal") !== (b === "personal")) return a === "personal" ? 1 : -1;
-  return a.localeCompare(b);
-};
-const orgFolders = () => app.vault.getRoot().children
-  .filter((child) => child.children && !child.name.startsWith("_") && !child.name.startsWith(".") && !IGNORED_ORG_FOLDERS.has(child.name))
-  .map((child) => child.name)
-  .sort(sortOrgNames);
-const weeklyLinkLines = (range) => orgFolders()
-  .map((orgName) => `  - "[[${range.start}--${range.shortEnd} ${capitalize(orgName)}]]"`)
-  .join("\n");
+const nearestContext = (marker, index) => shared.nearestContext(parts, marker, index);
 const invoiceTopicForFolder = () => {
   const topic = parts.slice(2).join("/");
   return ["assets/finances/invoices", "healthcare", "assets/car", "assets/house"].includes(topic) ? topic : "";
@@ -135,34 +64,17 @@ if (isDailyName || (parts.length === 1 && parts[0] === "daily")) {
   // Overdue-daily support: honour the file's own date; fall back to today for a non-date name (e.g. Untitled).
   const day = isDailyName ? currentTitle : tp.date.now("YYYY-MM-DD");
   const base = new Date(`${day}T00:00`);
-  const range = weekRange(base);
   templatePath = "_templates/Daily.md";
   targetPath = `daily/${day}`;
-  values = {
-    date: day,
-    previous: fmt(offsetDays(base, -1)),
-    next: fmt(offsetDays(base, 1)),
-    weekLines: weeklyLinkLines(range),
-  };
+  values = shared.dailyValues(orgFolders(), base);
 } else if (isWeeklyName || (parts.length === 2 && parts[1] === "weekly")) {
   // Honour the file's own week/org; fall back to today's week in the current org folder for a non-week name.
   const anchor = weeklyMatch ? new Date(`${weeklyMatch[1]}T00:00`) : new Date();
   const orgName = weeklyMatch ? weeklyOrg : org;
-  const range = weekRange(anchor);
-  const previous = weekRange(offsetDays(range.monday, -7));
-  const next = weekRange(offsetDays(range.monday, 7));
-  const orgCap = capitalize(orgName);
-  const filename = `${range.start}--${range.shortEnd} ${orgCap}`;
+  values = { ...shared.weeklyValues(orgName, anchor), created };
+  const { filename } = values;
   templatePath = "_templates/Weekly.md";
   targetPath = `${orgName}/weekly/${filename}`;
-  values = {
-    org: orgName,
-    created,
-    start: range.start,
-    end: range.end,
-    previous: `${previous.start}--${previous.shortEnd} ${orgCap}`,
-    next: `${next.start}--${next.shortEnd} ${orgCap}`,
-  };
 } else if (parts.length === 2 && parts[1] === "people") {
   const name = await prompt("person?");
   templatePath = "_templates/Person.md";

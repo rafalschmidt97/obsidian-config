@@ -1,4 +1,19 @@
 // Raw JavaScript stored as .md so Obsidian Sync includes it on mobile.
+module.exports = Object.fromEntries(["entry", "inbox", "triage", "archive", "note", "person", "meeting", "project", "team", "book", "clipping", "invoice", "document", "place", "trip", "transcript", "daily", "weekly", "monthlyReflection", "mealPlan", "periodicAuto"]
+  .map(name => [name, async (params, ...args) => {
+    const file = params.app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
+    if (!file) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
+    const runtime = new Function("module", `${await params.app.vault.read(file)}\nreturn module.exports;`)({ exports: {} });
+    return (await createFlows(await runtime.create(params.app)))[name](params, ...args);
+  }]));
+
+async function createFlows(shared) {
+const { render, readVaultFile, ensureFolder, uniqueMarkdownPath, openFile, safeFilename,
+  cleanTopic, capitalize, isFolder, getFrontmatter, detailsBlock, folderNames,
+  findMeetingFolders, findProjectFolders, findTopLevelProjectFolders, findFolders,
+  runBackable, choose, requiredInput, notice, orgFolders, weeklyValues, dailyValues,
+  fmtLocal, offsetDays, weekRange, previousMonthRange, startOfDay, weekdayName, parseDay,
+  noteRouteValues } = shared;
 const TEMPLATE_DIR = "_templates";
 
 const TEMPLATE = {
@@ -19,16 +34,7 @@ const TEMPLATE = {
   mealPlan: `${TEMPLATE_DIR}/Meal Plan.md`,
 };
 
-const IGNORED_PROJECT_FOLDERS = new Set(["journal", "meetings", "references", "Archives", "_attachments"]);
-const IGNORED_FOLDERS = new Set(["Archives", "_attachments"]);
-const IGNORED_ORG_FOLDERS = new Set(["archive", "daily"]);
-// Org priority is data, not code. Real values live in _scripts/config/orgs.json (git-ignored);
-// _scripts/config/orgs.example.json is the shared template. Loaded once per run by loadOrgConfig().
-// Empty ORG_ORDER falls back to a name-free rule (see sortOrgNames): alphabetical, personal last.
-let ORG_ORDER = [];
-const BACK_LABEL = "← Back";
-
-module.exports = {
+return {
   entry,
   inbox,
   triage,
@@ -53,7 +59,6 @@ module.exports = {
 };
 
 async function entry(params, settings = {}) {
-  await loadOrgConfig(params);
   return await runBackable(async () => {
     const flowByName = {
       inbox,
@@ -143,18 +148,13 @@ async function note(params) {
   const title = await requiredInput(params, "title?");
   return await createFromTemplate(params, TEMPLATE.note, `${route.targetFolder}/${safeFilename(title)}`, {
     org,
-    typeLine: valueFor(route.lines, "typeLine"),
-    topicLine: valueFor(route.lines, "topicLine"),
-    relationshipLines: valueFor(route.lines, "relationshipLines"),
+    ...noteRouteValues(route.frontmatter),
     body: "",
   });
 }
 
-// Resolves a non-inbox note destination into { targetFolder, lines }. `lines` carry rendered
-// typeLine/topicLine/relationshipLines. Shared by note creation and inbox triage so both route
-// notes identically. Returns null when a required sub-selection is unavailable.
+// Creation and triage share structured route metadata; rendering is a separate shared helper.
 async function noteRouteFor(params, org, destination) {
-  const lines = [];
   const frontmatter = {};
   let targetFolder = "";
 
@@ -164,38 +164,32 @@ async function noteRouteFor(params, org, destination) {
     if (selected.topic) {
       frontmatter.topic = selected.topic;
       if (selected.topic === "references" || selected.topic.startsWith("references/")) frontmatter.type = "reference";
-      if (selected.topic === "references" || selected.topic.startsWith("references/")) lines.push({ key: "typeLine", value: "type: reference" });
-      lines.push({ key: "topicLine", value: `topic: "${selected.topic}"` });
     }
   } else if (destination === "meetings") {
     const selected = await chooseMeeting(params, org);
     targetFolder = selected.path;
-    lines.push({ key: "relationshipLines", value: relationshipLines({ meeting: selected.name, project: selected.project, team: selected.team }) });
     frontmatter.meeting = `[[${selected.name}]]`;
     if (selected.project) frontmatter.project = `[[${selected.project}]]`;
     if (selected.team) frontmatter.team = `[[${selected.team}]]`;
   } else if (destination === "projects") {
     const selected = await chooseProject(params, org);
     targetFolder = selected.path;
-    lines.push({ key: "relationshipLines", value: `project: "[[${selected.name}]]"` });
     frontmatter.project = `[[${selected.name}]]`;
   } else if (destination === "people") {
     const name = await chooseFolderName(params, `${org}/people`, "person?");
     if (!name) return null;
     targetFolder = `${org}/people/${name}`;
-    lines.push({ key: "relationshipLines", value: `attendees: ["[[${name}]]"]` });
     frontmatter.attendees = [`[[${name}]]`];
   } else if (destination === "teams") {
     const name = await chooseFolderName(params, `${org}/teams`, "team?");
     if (!name) return null;
     targetFolder = `${org}/teams/${name}`;
-    lines.push({ key: "relationshipLines", value: `team: "[[${name}]]"` });
     frontmatter.team = `[[${name}]]`;
   } else {
     throw new Error(`Unknown note destination: ${destination}`);
   }
 
-  return { targetFolder, lines, frontmatter };
+  return { targetFolder, frontmatter };
 }
 
 // Triage entry point: list every inbox note (newest first). Pick one, then choose an action —
@@ -523,12 +517,8 @@ async function daily(params) {
   const target = `daily/${day}`;
   const existing = env(params).app.vault.getAbstractFileByPath(`${target}.md`);
   if (existing) return await openFile(params, existing);
-  const range = weekRange(base);
   return await createFromTemplate(params, TEMPLATE.daily, target, {
-    date: day,
-    previous: fmtLocal(offsetDays(base, -1)),
-    next: fmtLocal(offsetDays(base, 1)),
-    weekLines: weeklyLinkLines(params, range),
+    ...dailyValues(orgFolders(params), base),
   });
 }
 
@@ -566,40 +556,13 @@ async function chooseDailyDate(params) {
   return selected;
 }
 
-function startOfDay(dateValue) {
-  const result = new Date(dateValue);
-  result.setHours(0, 0, 0, 0);
-  return result;
-}
-
-function weekdayName(dateValue) {
-  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][new Date(dateValue).getDay()];
-}
-
-function parseDay(value) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec((value || "").trim());
-  if (!match) return null;
-  const parsed = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  if (Number.isNaN(parsed.getTime())) return null;
-  return startOfDay(parsed);
-}
-
 async function weekly(params) {
   const org = await chooseOrg(params);
-  const cap = capitalize(org);
-  const range = weekRange(new Date());
-  const prev = weekRange(offsetDays(range.monday, -7));
-  const next = weekRange(offsetDays(range.monday, 7));
-  const filename = `${range.start}--${range.shortEnd} ${cap}`;
+  const values = weeklyValues(org, new Date());
+  const { filename } = values;
   const existing = env(params).app.vault.getAbstractFileByPath(`${org}/weekly/${filename}.md`);
   if (existing) return await openFile(params, existing);
-  return await createFromTemplate(params, TEMPLATE.weekly, `${org}/weekly/${filename}`, {
-    org,
-    start: range.start,
-    end: range.end,
-    previous: `${prev.start}--${prev.shortEnd} ${cap}`,
-    next: `${next.start}--${next.shortEnd} ${cap}`,
-  });
+  return await createFromTemplate(params, TEMPLATE.weekly, `${org}/weekly/${filename}`, values);
 }
 
 async function monthlyReflection(params) {
@@ -709,19 +672,10 @@ async function periodicAuto(params) {
 // Create {org}/weekly/{Mon}--{Sun} {Org}.md for the current week if it does not already exist.
 // Mirrors the interactive weekly() flow but never prompts and never opens the note.
 async function ensureThisWeekWeekly(params, org) {
-  const cap = capitalize(org);
-  const range = weekRange(new Date());
-  const prev = weekRange(offsetDays(range.monday, -7));
-  const next = weekRange(offsetDays(range.monday, 7));
-  const filename = `${range.start}--${range.shortEnd} ${cap}`;
+  const values = weeklyValues(org, new Date());
+  const { filename } = values;
   if (env(params).app.vault.getAbstractFileByPath(`${org}/weekly/${filename}.md`)) return;
-  await createFromTemplate(params, TEMPLATE.weekly, `${org}/weekly/${filename}`, {
-    org,
-    start: range.start,
-    end: range.end,
-    previous: `${prev.start}--${prev.shortEnd} ${cap}`,
-    next: `${next.start}--${next.shortEnd} ${cap}`,
-  }, { open: false });
+  await createFromTemplate(params, TEMPLATE.weekly, `${org}/weekly/${filename}`, values, { open: false });
 }
 
 // Create daily/{YYYY-MM-DD}.md for today if it does not already exist. Mirrors the interactive
@@ -730,47 +684,7 @@ async function ensureTodayDaily(params) {
   const base = startOfDay(new Date());
   const day = fmtLocal(base);
   if (env(params).app.vault.getAbstractFileByPath(`daily/${day}.md`)) return;
-  const range = weekRange(base);
-  await createFromTemplate(params, TEMPLATE.daily, `daily/${day}`, {
-    date: day,
-    previous: fmtLocal(offsetDays(base, -1)),
-    next: fmtLocal(offsetDays(base, 1)),
-    weekLines: weeklyLinkLines(params, range),
-  }, { open: false });
-}
-
-async function runBackable(action) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      return await action();
-    } catch (error) {
-      if (isBack(error)) continue;
-      throw error;
-    }
-  }
-
-  return null;
-}
-
-async function choose(params, labels, values, prompt, options = {}) {
-  const { quickAddApi } = env(params);
-  const canGoBack = options.back !== false;
-  const finalLabels = canGoBack ? [...labels, BACK_LABEL] : labels;
-  const finalValues = canGoBack ? [...values, BACK_LABEL] : values;
-  const selected = await quickAddApi.suggester(finalLabels, finalValues, prompt);
-  if (selected === BACK_LABEL) throw new BackSignal();
-  return selected;
-}
-
-class BackSignal extends Error {
-  constructor() {
-    super(BACK_LABEL);
-    this.name = "BackSignal";
-  }
-}
-
-function isBack(error) {
-  return error instanceof BackSignal || error?.name === "BackSignal";
+  await createFromTemplate(params, TEMPLATE.daily, `daily/${day}`, dailyValues(orgFolders(params), base), { open: false });
 }
 
 async function chooseOrg(params) {
@@ -781,46 +695,6 @@ async function chooseOrg(params) {
 async function chooseNonPersonalOrg(params) {
   const orgs = orgFolders(params).filter((org) => org !== "personal");
   return await choose(params, orgs, orgs, "org?", { back: false });
-}
-
-function orgFolders(params) {
-  return env(params).app.vault.getRoot().children
-    .filter((child) => isFolder(child) && !child.name.startsWith("_") && !child.name.startsWith(".") && !IGNORED_ORG_FOLDERS.has(child.name))
-    .map((child) => child.name)
-    .sort(sortOrgNames);
-}
-
-function sortOrgNames(a, b) {
-  const aIndex = ORG_ORDER.indexOf(a);
-  const bIndex = ORG_ORDER.indexOf(b);
-  if (aIndex >= 0 || bIndex >= 0) return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
-  if ((a === "personal") !== (b === "personal")) return a === "personal" ? 1 : -1;
-  return a.localeCompare(b);
-}
-
-// Best-effort load of org priority from _scripts/config/orgs.json (falls back to orgs.example.json,
-// then to the name-free rule in sortOrgNames). Never throws: the vault must keep working
-// even if no config file exists.
-async function loadOrgConfig(params) {
-  try {
-    const { app } = env(params);
-    for (const path of ["_scripts/config/orgs.json", "_scripts/config/orgs.example.json"]) {
-      const file = app.vault.getAbstractFileByPath(path);
-      if (!file) continue;
-      const parsed = JSON.parse(await app.vault.cachedRead(file));
-      ORG_ORDER = Array.isArray(parsed.order) ? parsed.order : [];
-      return;
-    }
-    ORG_ORDER = [];
-  } catch (e) {
-    ORG_ORDER = [];
-  }
-}
-
-function weeklyLinkLines(params, range) {
-  return orgFolders(params)
-    .map((org) => `  - "[[${range.start}--${range.shortEnd} ${capitalize(org)}]]"`)
-    .join("\n");
 }
 
 async function chooseNoteFolder(params, org) {
@@ -852,62 +726,9 @@ async function chooseProject(params, org) {
 }
 
 async function chooseFolderName(params, basePath, prompt) {
-  const folder = env(params).app.vault.getAbstractFileByPath(basePath);
-  const names = isFolder(folder) ? folder.children
-    .filter((child) => isFolder(child) && !child.name.startsWith("_") && !IGNORED_FOLDERS.has(child.name))
-    .map((child) => child.name)
-    .sort((a, b) => a.localeCompare(b)) : [];
+  const names = folderNames(params, basePath);
   if (names.length === 0) return null;
   return await choose(params, names, names, prompt);
-}
-
-function findFolders(params, basePath) {
-  const root = env(params).app.vault.getAbstractFileByPath(basePath);
-  const results = [];
-  const walk = (folder) => {
-    if (!isFolder(folder)) return;
-    for (const child of folder.children) {
-      if (!isFolder(child) || child.name.startsWith("_") || IGNORED_FOLDERS.has(child.name)) continue;
-      const topic = child.path.slice(`${basePath}/`.length);
-      results.push({ name: child.name, path: child.path, label: topic, topic });
-      walk(child);
-    }
-  };
-  walk(root);
-  return results.sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function findTopLevelProjectFolders(params, basePath) {
-  const root = env(params).app.vault.getAbstractFileByPath(basePath);
-  if (!isFolder(root)) return [];
-  return root.children
-    .filter((child) => isFolder(child) && !child.name.startsWith("_") && !IGNORED_PROJECT_FOLDERS.has(child.name))
-    .map((child) => ({ name: child.name, path: child.path, label: child.name, parent: child.name }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function findProjectFolders(params, basePath) {
-  const root = env(params).app.vault.getAbstractFileByPath(basePath);
-  const results = [];
-  const addProject = (folder) => results.push({ name: folder.name, path: folder.path, label: folder.path.slice(`${basePath}/`.length).replace(/\/projects\//g, " / ") });
-  const walkProject = (folder) => {
-    if (!isFolder(folder)) return;
-    const nested = folder.children.find((child) => isFolder(child) && child.name === "projects");
-    if (!isFolder(nested)) return;
-    for (const child of nested.children) {
-      if (!isFolder(child) || child.name.startsWith("_") || IGNORED_PROJECT_FOLDERS.has(child.name)) continue;
-      addProject(child);
-      walkProject(child);
-    }
-  };
-  if (isFolder(root)) {
-    for (const child of root.children) {
-      if (!isFolder(child) || child.name.startsWith("_") || IGNORED_PROJECT_FOLDERS.has(child.name)) continue;
-      addProject(child);
-      walkProject(child);
-    }
-  }
-  return results.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function findJournalNotes(params, org) {
@@ -922,10 +743,6 @@ function findJournalNotes(params, org) {
     results.push({ file, label: file.basename, created: String(frontmatter.created || "") });
   }
   return results.sort((a, b) => b.created.localeCompare(a.created));
-}
-
-function getFrontmatter(params, file) {
-  return env(params).app.metadataCache.getFileCache(file)?.frontmatter || null;
 }
 
 // All triageable inbox notes across active orgs, newest first. Matches by type: inbox frontmatter
@@ -964,29 +781,6 @@ async function retagInboxNote(params, file, org, routeFrontmatter) {
   });
 }
 
-function findMeetingFolders(params, rootPath) {
-  const root = env(params).app.vault.getAbstractFileByPath(rootPath);
-  const results = [];
-  const walk = (folder) => {
-    if (!isFolder(folder)) return;
-    if (folder.name === "meetings") {
-      const meetingIndex = folder.path.split("/").length - 1;
-      for (const child of folder.children) {
-        if (!isFolder(child)) continue;
-        const parts = child.path.split("/");
-        const project = nearestContext(parts, "projects", meetingIndex);
-        const team = nearestContext(parts, "teams", meetingIndex);
-        const context = project || team;
-        results.push({ name: child.name, path: child.path, project, team, label: context ? `${context} / ${child.name}` : child.name });
-      }
-      return;
-    }
-    for (const child of folder.children) if (isFolder(child) && !child.name.startsWith("_") && child.name !== "Archives") walk(child);
-  };
-  walk(root);
-  return results.sort((a, b) => a.label.localeCompare(b.label));
-}
-
 async function createFromTemplate(params, templatePath, targetPathWithoutExtension, values, options = {}) {
   const { app, quickAddApi } = env(params);
   const template = await readVaultFile(params, templatePath);
@@ -998,131 +792,10 @@ async function createFromTemplate(params, templatePath, targetPathWithoutExtensi
   return await openFile(params, file);
 }
 
-async function openFile(params, file) {
-  await env(params).app.workspace.getLeaf().openFile(file);
-  return file;
-}
-
-async function ensureFolder(params, folderPath) {
-  const { app } = env(params);
-  if (!folderPath) return;
-  const parts = folderPath.split("/").filter(Boolean);
-  let current = "";
-  for (const part of parts) {
-    current = current ? `${current}/${part}` : part;
-    if (!app.vault.getAbstractFileByPath(current)) await app.vault.createFolder(current);
-  }
-}
-
-async function uniqueMarkdownPath(params, pathWithoutExtension) {
-  const { app } = env(params);
-  const base = `${pathWithoutExtension}.md`;
-  if (!app.vault.getAbstractFileByPath(base)) return base;
-  for (let index = 1; index < 100; index++) {
-    const candidate = `${pathWithoutExtension} (${index}).md`;
-    if (!app.vault.getAbstractFileByPath(candidate)) return candidate;
-  }
-  throw new Error(`Could not create a unique file name for ${base}.`);
-}
-
-async function readVaultFile(params, path) {
-  const file = env(params).app.vault.getAbstractFileByPath(path);
-  if (!file) throw new Error(`Template not found: ${path}`);
-  return await env(params).app.vault.cachedRead(file);
-}
-
-async function requiredInput(params, prompt) {
-  const value = await env(params).quickAddApi.inputPrompt(prompt);
-  if (!value || !value.trim()) throw new Error(`${prompt} is required.`);
-  return value.trim();
-}
-
 async function requiredTopic(params, prompt) {
   const topic = cleanTopic(await requiredInput(params, prompt));
   if (!topic) throw new Error(`${prompt} must contain at least one valid folder name.`);
   return topic;
-}
-
-function render(template, values) {
-  return stripEmptyFrontmatterLines(template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? ""));
-}
-
-function stripEmptyFrontmatterLines(content) {
-  if (!content.startsWith("---\n")) return content;
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return content;
-  const frontmatter = content.slice(4, end).split("\n").filter((line) => line.trim().length > 0).join("\n");
-  return `---\n${frontmatter}${content.slice(end)}`;
-}
-
-function relationshipLines({ meeting, project, team }) {
-  return [
-    meeting ? `meeting: "[[${meeting}]]"` : "",
-    project ? `project: "[[${project}]]"` : "",
-    team ? `team: "[[${team}]]"` : "",
-  ].filter(Boolean).join("\n");
-}
-
-function valueFor(lines, key) {
-  return lines.find((item) => item.key === key)?.value ?? "";
-}
-
-function detailsBlock() {
-  return `## Details\n\n| | |\n|---|---|\n| Teams | |\n| Supervisor | |\n| Email | |\n| GitHub | |\n| Mobile | |\n| Board | |\n`;
-}
-
-function nearestContext(parts, marker, beforeIndex) {
-  for (let index = Math.min(beforeIndex, parts.length - 1); index >= 0; index--) {
-    if (parts[index] === marker) return parts[index + 1] || "";
-  }
-  return "";
-}
-
-function weekRange(dateValue) {
-  const current = new Date(dateValue);
-  const day = current.getDay();
-  const diffToMon = day === 0 ? -6 : 1 - day;
-  const monday = new Date(current);
-  monday.setDate(current.getDate() + diffToMon);
-  const sunday = offsetDays(monday, 6);
-  const nextMonday = offsetDays(monday, 7);
-  return { monday, start: fmtLocal(monday), end: fmtLocal(nextMonday), shortEnd: fmtLocal(sunday).slice(5) };
-}
-
-function previousMonthRange(dateValue) {
-  const now = new Date(dateValue);
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const refMonth = month === 0 ? 11 : month - 1;
-  const refYear = month === 0 ? year - 1 : year;
-  const previous = new Date(refYear, refMonth - 1, 1);
-  const next = new Date(refYear, refMonth + 1, 1);
-  const start = new Date(refYear, refMonth, 1);
-  const end = new Date(refYear, refMonth + 1, 1);
-  return { start: fmt(start), end: fmt(end), month: fmtMonth(start), previousMonth: fmtMonth(previous), nextMonth: fmtMonth(next) };
-}
-
-function offsetDays(dateValue, days) {
-  const result = new Date(dateValue);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function fmt(dateValue) {
-  return fmtLocal(dateValue);
-}
-
-function fmtLocal(dateValue) {
-  const d = new Date(dateValue);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-function fmtMonth(dateValue) {
-  const d = new Date(dateValue);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function date(params, offset = 0) {
@@ -1133,31 +806,7 @@ function inboxStamp(params) {
   return env(params).quickAddApi.date.now("YYYY-MM-DD HH-mm-ss");
 }
 
-function capitalize(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function notice(message) {
-  if (typeof Notice !== "undefined") new Notice(message);
-  return null;
-}
-
-function safeFilename(value) {
-  return String(value).replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
-}
-
-function cleanTopic(value) {
-  return String(value)
-    .split("/")
-    .map((part) => safeFilename(part))
-    .filter(Boolean)
-    .join("/");
-}
-
-function isFolder(file) {
-  return file && Array.isArray(file.children);
-}
-
 function env(params) {
   return { app: params.app, quickAddApi: params.quickAddApi };
+}
 }

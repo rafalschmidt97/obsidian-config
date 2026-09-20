@@ -26,6 +26,7 @@ function fixture(seeds = [], answers = []) {
     return file;
   }
   folder(''); folder('work'); folder('personal');
+  add('_scripts/shared/runtime.md', fs.readFileSync(path.join(root, '_scripts/shared/runtime.md'), 'utf8'));
   add('_scripts/quickadd/journal.md', fs.readFileSync(path.join(root, '_scripts/quickadd/journal.md'), 'utf8'));
   for (const seed of seeds) add(...seed);
   const app = {
@@ -78,7 +79,9 @@ function fixture(seeds = [], answers = []) {
   };
   function load(relative) {
     const context = vm.createContext({ module: { exports: {} }, console, setTimeout, clearTimeout });
-    vm.runInContext(fs.readFileSync(path.join(root, relative), 'utf8'), context);
+    // QuickAdd 2.12.3's synchronous wrapper, with desktop require unavailable like mobile.
+    const source = fs.readFileSync(path.join(root, relative), 'utf8');
+    vm.runInContext(`(function(require, module, exports) {${source}\n})(() => undefined, module, module.exports)`, context);
     return context.module.exports;
   }
   function template(name) { return add(`_templates/${name}.md`, fs.readFileSync(path.join(root, `_templates/${name}.md`), 'utf8')); }
@@ -228,5 +231,72 @@ test('Open Weekly uses canonical local config, example fallback and explicit ove
     await f.load('_scripts/quickadd/Open Weekly.md').entry(f, settings);
     assert.equal(f.opened.length, 1);
     assert.ok(f.opened[0].startsWith(`${expected}/weekly/`));
+  }
+});
+
+test('shared runtime handles nested discovery, org priority and local calendar boundaries', async () => {
+  const f = fixture([['_scripts/config/orgs.json', JSON.stringify({ order: ['personal', 'work'], default: 'personal' })]]);
+  for (const p of ['archive/work/projects/Old', 'daily', 'work/projects/Alpha/projects/Beta/meetings/Review', 'work/teams/Engineering/meetings/Planning']) f.folder(p);
+  const shared = await f.load('_scripts/shared/runtime.md').create(f.app);
+  assert.deepEqual(Array.from(shared.orgFolders()), ['personal', 'work']);
+  assert.equal(await shared.defaultOrg(), 'personal');
+  assert.deepEqual(Array.from(shared.findProjectFolders(f, 'work/projects'), p => p.label), ['Alpha', 'Alpha / Beta']);
+  const meetings = shared.findMeetingFolders(f, 'work');
+  assert.equal(meetings.find(x => x.name === 'Review').project, 'Beta');
+  assert.equal(meetings.find(x => x.name === 'Planning').team, 'Engineering');
+  const week = shared.weeklyValues('work', new Date(2027, 0, 1, 0, 15));
+  assert.equal(week.filename, '2026-12-28--01-03 Work');
+  assert.equal(week.end, '2027-01-04'); assert.equal(week.next, '2027-01-04--01-10 Work');
+  assert.equal(shared.previousMonthRange(new Date(2027, 0, 1)).start, '2026-12-01');
+  assert.equal(shared.dailyValues(shared.orgFolders(), new Date(2026, 8, 20, 0, 15)).date, '2026-09-20');
+});
+
+test('QuickAdd and folder-click share periodic values and configured org order', async () => {
+  const seeds = [['_scripts/config/orgs.json', JSON.stringify({ order: ['personal', 'work'] })]];
+  const a = fixture(seeds, ['pick a date…', '2026-09-20']); a.template('Daily');
+  await a.load('_scripts/quickadd/templates.md').entry(a, { flow: 'daily' });
+  const b = fixture(seeds); b.template('Daily'); b.add('personal/inbox/2026-09-20.md');
+  await b.templater('_scripts/templater/apply-templateq-folder-template.md', 'personal/inbox/2026-09-20.md');
+  assert.equal(a.files.get('daily/2026-09-20.md').content, b.files.get('daily/2026-09-20.md').content);
+  const c = fixture([], ['work']); c.template('Weekly');
+  await c.load('_scripts/quickadd/templates.md').entry(c, { flow: 'weekly' });
+  const d = fixture(); d.template('Weekly');
+  await d.load('_scripts/quickadd/Open Weekly.md').entry(d, { org: 'work' });
+  assert.equal(c.files.get(c.opened[0]).content, d.files.get(d.opened[0]).content);
+});
+
+test('startup creates periods once without opening or overwriting them', async () => {
+  const f = fixture(); f.template('Weekly'); f.template('Daily');
+  const script = f.load('_scripts/quickadd/templates.md');
+  await script.entry(f, { flow: 'periodicAuto' });
+  const periods = [...f.files.values()].filter(x => /^(daily\/|(?:work|personal)\/weekly\/).*\.md$/.test(x.path));
+  assert.equal(periods.length, 3);
+  periods[0].content = 'User edits';
+  await script.entry(f, { flow: 'periodicAuto' });
+  assert.equal(periods[0].content, 'User edits'); assert.equal(f.opened.length, 0);
+});
+
+test('QuickAdd note routing and journal draft reuse work without Node imports', async () => {
+  const f = fixture([], ['work', 'projects', 'Alpha', 'Plan']);
+  f.folder('work/projects/Alpha'); f.template('Note');
+  await f.load('_scripts/quickadd/templates.md').entry(f, { flow: 'note' });
+  assert.match(f.files.get('work/projects/Alpha/Plan.md').content, /project: "\[\[Alpha\]\]"/);
+  const j = fixture([], ['work', 'draft', 'person', 'Alex', 'work', 'draft', 'person', 'Alex']);
+  j.folder('work/people/Alex'); j.template('Journal Person');
+  const script = j.load('_scripts/quickadd/journal.md');
+  await script.entry(j); await script.entry(j);
+  assert.equal(j.opened[0], 'work/people/Alex/Draft Alex.md'); assert.equal(j.opened[1], j.opened[0]);
+  assert.ok(!j.files.has('work/people/Alex/Draft Alex (1).md'));
+});
+
+test('exports are synchronous and missing runtime fails before creating content', async () => {
+  for (const file of ['journal.md', 'templates.md', 'actionpoints.md', 'Open Weekly.md']) {
+    const f = fixture();
+    const script = f.load(`_scripts/quickadd/${file}`);
+    assert.equal(typeof script.entry, 'function');
+    f.files.delete('_scripts/shared/runtime.md');
+    const count = f.files.size;
+    await assert.rejects(script.entry(f), /Shared runtime missing/);
+    assert.equal(f.files.size, count);
   }
 });

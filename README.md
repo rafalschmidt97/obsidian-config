@@ -54,6 +54,8 @@ _templates/               Dumb content templates with {{placeholders}}
 _scripts/                 QuickAdd + Templater automation (raw JS stored as .md)
   quickadd/               Explicit, command-driven note creation
   templater/              Folder-click creation adapters
+  shared/                 Synced runtime helpers used by both entry paths
+  tests/                  In-memory flow checks (local development only)
   config/                 Per-user settings (orgs, meal plan); *.example.json ships
 .obsidian/                Curated subset of the real Obsidian config
 categories.md             Global index-of-indexes
@@ -71,6 +73,9 @@ Two automation layers work together:
 
 Scripts are stored as raw JavaScript inside `.md` files on purpose, so Obsidian
 Sync ships them to mobile as ordinary notes. Do not rename them to `.js`.
+
+See [`_scripts/README.md`](_scripts/README.md) for the shared-runtime contract,
+QuickAdd compatibility constraints, and verification command.
 
 ## Plugins
 

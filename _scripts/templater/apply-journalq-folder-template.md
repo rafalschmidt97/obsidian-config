@@ -12,70 +12,13 @@ const parts = folder.split("/").filter(Boolean);
 const org = folder.split("/")[0];
 const currentTitle = tp.file.title.startsWith("Untitled") ? "" : tp.file.title;
 
-const safeFilename = (value) => String(value).replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
-const fmt = (dateValue) => {
-  const d = new Date(dateValue);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-const fmtMonth = (dateValue) => {
-  const d = new Date(dateValue);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-};
-const capitalize = (value) => value.charAt(0).toUpperCase() + value.slice(1);
-const wikilink = (value) => value.startsWith("[[") && value.endsWith("]]") ? value : `[[${value}]]`;
-const escapeYamlString = (value) => String(value).replace(/"/g, '\\"');
-const formatWikilinkList = (key, items) => {
-  if (!items.length) return "";
-  return `${key}:\n${items.map((item) => `  - "${escapeYamlString(wikilink(item))}"`).join("\n")}`;
-};
-const uniqueBasePath = (targetFolder, filename) => {
-  const base = `${targetFolder}/${filename}`;
-  if (!app.vault.getAbstractFileByPath(`${base}.md`)) return base;
-
-  for (let index = 1; index < 100; index++) {
-    const candidate = `${base} (${index})`;
-    if (!app.vault.getAbstractFileByPath(`${candidate}.md`)) return candidate;
-  }
-
-  throw new Error(`Could not create a unique file name for ${base}.md`);
-};
-const previousMonthRange = (dateValue) => {
-  const now = new Date(dateValue);
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const refMonth = month === 0 ? 11 : month - 1;
-  const refYear = month === 0 ? year - 1 : year;
-  const previous = new Date(refYear, refMonth - 1, 1);
-  const next = new Date(refYear, refMonth + 1, 1);
-  const start = new Date(refYear, refMonth, 1);
-  const end = new Date(refYear, refMonth + 1, 1);
-  return { start: fmt(start), end: fmt(end), month: fmtMonth(start), previousMonth: fmtMonth(previous), nextMonth: fmtMonth(next) };
-};
-const nearestContext = (marker, beforeIndex) => {
-  for (let index = Math.min(beforeIndex, parts.length - 1); index >= 0; index--) {
-    if (parts[index] === marker) return parts[index + 1] || "";
-  }
-  return "";
-};
-const renderTemplate = async (templatePath, values) => {
-  const templateFile = app.vault.getAbstractFileByPath(templatePath);
-  const template = await app.vault.cachedRead(templateFile);
-  const rendered = template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? "");
-  if (!rendered.startsWith("---\n")) return rendered;
-
-  const end = rendered.indexOf("\n---", 4);
-  if (end === -1) return rendered;
-
-  const frontmatter = rendered.slice(4, end)
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .join("\n");
-
-  return `---\n${frontmatter}${rendered.slice(end)}`;
-};
+const runtimeFile = app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
+if (!runtimeFile) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
+const runtime = new Function("module", `${await app.vault.read(runtimeFile)}\nreturn module.exports;`)({ exports: {} });
+const shared = await runtime.create(app);
+const { safeFilename, capitalize, previousMonthRange, formatWikilinkList } = shared;
+const nearestContext = (marker, index) => shared.nearestContext(parts, marker, index);
+const renderTemplate = async (path, values) => shared.render(await shared.readVaultFile({ app }, path), values);
 
 let templatePath = "";
 let filenameSubject = "";
@@ -91,9 +34,7 @@ const mode = await tp.system.suggester(["now", "draft"], ["now", "draft"], true,
 const isDraft = mode === "draft";
 const offerDraft = async (context) => {
   if (isDraft) return false;
-  const script = app.vault.getAbstractFileByPath("_scripts/quickadd/journal.md");
-  if (!script) throw new Error("Journal script not found.");
-  const journal = new Function("module", `${await app.vault.cachedRead(script)}\nreturn module.exports;`)({ exports: {} });
+  const journal = await runtime.loadModule(app, "_scripts/quickadd/journal.md");
   const activated = await journal.activateFolderDraft(
     { app, quickAddApi: { date: tp.date } }, folder, { org, ...context },
     (labels, files) => tp.system.suggester(labels, files, true, "draft?")
@@ -150,10 +91,7 @@ if (parts.length === 2 && parts[1] === "journal") {
     const meeting = parts[meetingIndex + 1];
     const project = nearestContext("projects", meetingIndex);
     const team = nearestContext("teams", meetingIndex);
-    const contextLines = [
-      project ? `project: "[[${project}]]"` : "",
-      team ? `team: "[[${team}]]"` : "",
-    ].filter(Boolean).join("\n");
+    const contextLines = shared.relationshipLines({ project, team });
 
     filenameSubject = meeting;
     templatePath = "_templates/Journal Meeting.md";
@@ -188,5 +126,5 @@ if (isDraft) {
 }
 
 tR += rendered;
-await tp.file.move(uniqueBasePath(folder, filename));
+await tp.file.move((await shared.uniqueMarkdownPath({ app }, `${folder}/${filename}`)).replace(/\.md$/, ""));
 -%>

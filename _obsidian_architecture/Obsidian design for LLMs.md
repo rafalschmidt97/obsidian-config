@@ -16,3 +16,4 @@ Before changing vault architecture, templates, scripts, or config:
 10. Do not edit generated action-point views as canonical data.
 11. Do not enable Custom Sort or migration-only plugins unless the source design changes.
 12. If you change behavior, update both `Obsidian design.md` and this LLM summary if needed.
+13. Before changing shared script behavior, read `_scripts/README.md`. Shared helpers live in `_scripts/shared/runtime.md`; keep QuickAdd exports synchronous and load dependencies inside async calls through the vault API. Run `node --test _scripts/tests/flows.test.cjs` after script changes.

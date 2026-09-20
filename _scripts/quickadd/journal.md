@@ -1,4 +1,18 @@
 // Raw JavaScript stored as .md so Obsidian Sync includes it on mobile.
+// QuickAdd evaluates exports synchronously; dependencies load only when a flow is invoked.
+module.exports = Object.fromEntries(["entry", "journal", "generic", "draft", "future", "person", "meeting", "project", "team", "activateFolderDraft"]
+  .map(name => [name, async (params, ...args) => {
+    const file = params.app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
+    if (!file) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
+    const runtime = new Function("module", `${await params.app.vault.read(file)}\nreturn module.exports;`)({ exports: {} });
+    return (await createFlows(await runtime.create(params.app)))[name](params, ...args);
+  }]));
+
+async function createFlows(shared) {
+const { render, readVaultFile, ensureFolder, uniqueMarkdownPath, openFile, renameFile,
+  safeFilename, isFolder, getFrontmatter, findMeetingFolders, findProjectFolders,
+  runBackable, choose, requiredInput, notice, formatWikilinkList,
+  orgFolders, journalMatchesDraft, folderNames, relationshipLines } = shared;
 const TEMPLATE_DIR = "_templates";
 
 const TEMPLATE = {
@@ -9,16 +23,7 @@ const TEMPLATE = {
   team: `${TEMPLATE_DIR}/Journal Team.md`,
 };
 
-const IGNORED_PROJECT_FOLDERS = new Set(["journal", "meetings", "references", "Archives", "_attachments"]);
-const IGNORED_ENTITY_FOLDERS = new Set(["Archives", "_attachments"]);
-const IGNORED_ORG_FOLDERS = new Set(["archive", "daily"]);
-// Org priority is data, not code. Real values live in _scripts/config/orgs.json (git-ignored);
-// _scripts/config/orgs.example.json is the shared template. Loaded once per run by loadOrgConfig().
-// Empty ORG_ORDER falls back to a name-free rule (see sortOrgNames): alphabetical, personal last.
-let ORG_ORDER = [];
-const BACK_LABEL = "← Back";
-
-module.exports = {
+return {
   entry,
   journal,
   generic: journal,
@@ -32,7 +37,6 @@ module.exports = {
 };
 
 async function entry(params, settings = {}) {
-  await loadOrgConfig(params);
   return await runBackable(async () => {
     const flows = { journal, generic: journal, draft, future: draft, person, meeting, project, team };
     const flow = settings.flow ? flows[settings.flow] : journalMenu;
@@ -79,11 +83,7 @@ async function journal(params, selectedOrg, options = {}) {
     "type?"
   );
 
-  const matchesDraft = (frontmatter, file) => {
-    if (!isDraftJournal(frontmatter, org, file)) return false;
-    if (frontmatter.meeting || frontmatter.project || frontmatter.team) return false;
-    return (frontmatter.type || "") === type;
-  };
+  const matchesDraft = (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type });
 
   if (!options.draft) {
     const drafts = await findMatchingDrafts(params, `${org}/journal`, matchesDraft);
@@ -131,11 +131,7 @@ async function person(params, selectedOrg, options = {}) {
     targetFolder: `${org}/people/${personName}`,
     filenameSubject: personName,
     values: { org, person: personName },
-    matchesDraft: (frontmatter, file) => {
-      return isDraftJournal(frontmatter, org, file)
-        && frontmatter.type === "1-1"
-        && frontmatterValueMatchesLink(frontmatter.attendees, personName);
-    },
+    matchesDraft: (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type: "1-1", person: personName }),
   }, options);
 }
 
@@ -190,11 +186,7 @@ async function project(params, selectedOrg, options = {}) {
     targetFolder: selectedProject.path,
     filenameSubject: selectedProject.name,
     values: { org, project: selectedProject.name },
-    matchesDraft: (frontmatter, file) => {
-      return isDraftJournal(frontmatter, org, file)
-        && frontmatter.type === "project"
-        && frontmatterValueMatchesLink(frontmatter.project, selectedProject.name);
-    },
+    matchesDraft: (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type: "project", project: selectedProject.name }),
   }, options);
 }
 
@@ -209,19 +201,12 @@ async function team(params, selectedOrg, options = {}) {
     targetFolder: `${org}/teams/${teamName}/journal`,
     filenameSubject: teamName,
     values: { org, team: teamName },
-    matchesDraft: (frontmatter, file) => {
-      return isDraftJournal(frontmatter, org, file)
-        && frontmatter.type === "team"
-        && frontmatterValueMatchesLink(frontmatter.team, teamName);
-    },
+    matchesDraft: (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type: "team", team: teamName }),
   }, options);
 }
 
 async function createMeetingJournal(params, org, meetingInfo, options = {}) {
-  const contextLines = [
-    meetingInfo.project ? `project: "[[${meetingInfo.project}]]"` : "",
-    meetingInfo.team ? `team: "[[${meetingInfo.team}]]"` : "",
-  ].filter(Boolean).join("\n");
+  const contextLines = relationshipLines({ project: meetingInfo.project, team: meetingInfo.team });
 
   return await createOrActivateJournal(params, {
     template: TEMPLATE.meeting,
@@ -233,11 +218,7 @@ async function createMeetingJournal(params, org, meetingInfo, options = {}) {
       meeting: meetingInfo.name,
       contextLines,
     },
-    matchesDraft: (frontmatter, file) => {
-      return isDraftJournal(frontmatter, org, file)
-        && frontmatter.type === "meeting"
-        && frontmatterValueMatchesLink(frontmatter.meeting, meetingInfo.name);
-    },
+    matchesDraft: (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type: "meeting", meeting: meetingInfo.name }),
   }, options);
 }
 
@@ -304,14 +285,7 @@ async function activateDraft(params, file, targetPathWithoutExtension) {
 
 // Folder-click adapter uses the same draft matching and activation as explicit capture.
 async function activateFolderDraft(params, targetFolder, context, select) {
-  const drafts = await findMatchingDrafts(params, targetFolder, (fm, file) => {
-    if (!isDraftJournal(fm, context.org, file) || (fm.type || "") !== context.type) return false;
-    if (context.person) return frontmatterValueMatchesLink(fm.attendees, context.person);
-    for (const key of ["meeting", "project", "team"]) {
-      if (context[key]) return frontmatterValueMatchesLink(fm[key], context[key]);
-    }
-    return !fm.meeting && !fm.project && !fm.team;
-  });
+  const drafts = await findMatchingDrafts(params, targetFolder, (fm, file) => journalMatchesDraft(fm, file, context));
   if (!drafts.length) return false;
   const selected = await select([...drafts.map(file => `use draft: ${file.basename}`), "create new"], [...drafts, null]);
   if (!selected) return false;
@@ -320,88 +294,14 @@ async function activateFolderDraft(params, targetFolder, context, select) {
   return true;
 }
 
-async function runBackable(action) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      return await action();
-    } catch (error) {
-      if (isBack(error)) continue;
-      throw error;
-    }
-  }
-
-  notice("Back limit reached.");
-  return null;
-}
-
-async function choose(params, labels, values, prompt, options = {}) {
-  const { quickAddApi } = env(params);
-  const canGoBack = options.back !== false;
-  const finalLabels = canGoBack ? [...labels, BACK_LABEL] : labels;
-  const finalValues = canGoBack ? [...values, BACK_LABEL] : values;
-  const selected = await quickAddApi.suggester(finalLabels, finalValues, prompt);
-  if (selected === BACK_LABEL) throw new BackSignal();
-  return selected;
-}
-
-class BackSignal extends Error {
-  constructor() {
-    super(BACK_LABEL);
-    this.name = "BackSignal";
-  }
-}
-
-function isBack(error) {
-  return error instanceof BackSignal || error?.name === "BackSignal";
-}
-
 async function chooseOrg(params) {
-  const { app, quickAddApi } = env(params);
-  const orgs = app.vault.getRoot().children
-    .filter((child) => isFolder(child) && !child.name.startsWith("_") && !child.name.startsWith(".") && !IGNORED_ORG_FOLDERS.has(child.name))
-    .map((child) => child.name)
-    .sort(sortOrgNames);
-
+  const orgs = orgFolders(params);
   if (orgs.length === 0) throw new Error("No org folders found.");
   return await choose(params, orgs, orgs, "org?", { back: false });
 }
 
-function sortOrgNames(a, b) {
-  const aIndex = ORG_ORDER.indexOf(a);
-  const bIndex = ORG_ORDER.indexOf(b);
-  if (aIndex >= 0 || bIndex >= 0) return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
-  if ((a === "personal") !== (b === "personal")) return a === "personal" ? 1 : -1;
-  return a.localeCompare(b);
-}
-
-// Best-effort load of org priority from _scripts/config/orgs.json (falls back to orgs.example.json,
-// then to the name-free rule in sortOrgNames). Never throws: the vault must keep working
-// even if no config file exists.
-async function loadOrgConfig(params) {
-  try {
-    const { app } = env(params);
-    for (const path of ["_scripts/config/orgs.json", "_scripts/config/orgs.example.json"]) {
-      const file = app.vault.getAbstractFileByPath(path);
-      if (!file) continue;
-      const parsed = JSON.parse(await app.vault.cachedRead(file));
-      ORG_ORDER = Array.isArray(parsed.order) ? parsed.order : [];
-      return;
-    }
-    ORG_ORDER = [];
-  } catch (e) {
-    ORG_ORDER = [];
-  }
-}
-
 async function chooseFolder(params, basePath, prompt) {
-  const { app, quickAddApi } = env(params);
-  const folder = app.vault.getAbstractFileByPath(basePath);
-  const names = isFolder(folder)
-    ? folder.children
-        .filter((child) => isFolder(child) && !child.name.startsWith("_") && !IGNORED_ENTITY_FOLDERS.has(child.name))
-        .map((child) => child.name)
-        .sort((a, b) => a.localeCompare(b))
-    : [];
+  const names = folderNames(params, basePath);
 
   if (names.length === 0) {
     notice(`No folders found in ${basePath}.`);
@@ -409,77 +309,6 @@ async function chooseFolder(params, basePath, prompt) {
   }
 
   return await choose(params, names, names, prompt);
-}
-
-function findMeetingFolders(params, rootPath) {
-  const { app } = env(params);
-  const root = app.vault.getAbstractFileByPath(rootPath);
-  const results = [];
-
-  const walk = (folder) => {
-    if (!isFolder(folder)) return;
-
-    if (folder.name === "meetings") {
-      const meetingIndex = folder.path.split("/").length - 1;
-      for (const child of folder.children) {
-        if (!isFolder(child)) continue;
-
-        const parts = child.path.split("/");
-        const project = nearestContext(parts, "projects", meetingIndex);
-        const team = nearestContext(parts, "teams", meetingIndex);
-        const context = project || team;
-
-        results.push({
-          name: child.name,
-          path: child.path,
-          project,
-          team,
-          label: context ? `${context} / ${child.name}` : child.name,
-        });
-      }
-      return;
-    }
-
-    for (const child of folder.children) {
-      if (isFolder(child) && !child.name.startsWith("_") && child.name !== "Archives") walk(child);
-    }
-  };
-
-  walk(root);
-  return results.sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function findProjectFolders(params, basePath) {
-  const { app } = env(params);
-  const root = app.vault.getAbstractFileByPath(basePath);
-  const results = [];
-
-  const addProject = (folder) => {
-    const label = folder.path.slice(`${basePath}/`.length).replace(/\/projects\//g, " / ");
-    results.push({ name: folder.name, path: folder.path, label });
-  };
-
-  const walkProject = (folder) => {
-    if (!isFolder(folder)) return;
-    const nestedProjects = folder.children.find((child) => isFolder(child) && child.name === "projects");
-    if (!isFolder(nestedProjects)) return;
-
-    for (const child of nestedProjects.children) {
-      if (!isFolder(child) || child.name.startsWith("_") || IGNORED_PROJECT_FOLDERS.has(child.name)) continue;
-      addProject(child);
-      walkProject(child);
-    }
-  };
-
-  if (isFolder(root)) {
-    for (const child of root.children) {
-      if (!isFolder(child) || child.name.startsWith("_") || IGNORED_PROJECT_FOLDERS.has(child.name)) continue;
-      addProject(child);
-      walkProject(child);
-    }
-  }
-
-  return results.sort((a, b) => a.label.localeCompare(b.label));
 }
 
 async function findMatchingDrafts(params, targetFolder, matchesDraft) {
@@ -515,82 +344,11 @@ async function createFromTemplate(params, templatePath, targetPathWithoutExtensi
   return file;
 }
 
-async function openFile(params, file) {
-  await env(params).app.workspace.getLeaf().openFile(file);
-  return file;
-}
-
-async function ensureFolder(params, folderPath) {
-  const { app } = env(params);
-  if (!folderPath) return;
-
-  const parts = folderPath.split("/").filter(Boolean);
-  let current = "";
-  for (const part of parts) {
-    current = current ? `${current}/${part}` : part;
-    if (!app.vault.getAbstractFileByPath(current)) {
-      await app.vault.createFolder(current);
-    }
-  }
-}
-
-async function renameFile(params, file, targetPath) {
-  const { app } = env(params);
-  if (app.fileManager?.renameFile) {
-    await app.fileManager.renameFile(file, targetPath);
-    return;
-  }
-
-  await app.vault.rename(file, targetPath);
-}
-
-async function uniqueMarkdownPath(params, pathWithoutExtension) {
-  const { app } = env(params);
-  const base = `${pathWithoutExtension}.md`;
-  if (!app.vault.getAbstractFileByPath(base)) return base;
-
-  for (let index = 1; index < 100; index++) {
-    const candidate = `${pathWithoutExtension} (${index}).md`;
-    if (!app.vault.getAbstractFileByPath(candidate)) return candidate;
-  }
-
-  throw new Error(`Could not create a unique file name for ${base}.`);
-}
-
-async function readVaultFile(params, path) {
-  const { app } = env(params);
-  const file = app.vault.getAbstractFileByPath(path);
-  if (!file) throw new Error(`Template not found: ${path}`);
-  return await app.vault.cachedRead(file);
-}
-
-async function requiredInput(params, prompt) {
-  const { quickAddApi } = env(params);
-  const value = await quickAddApi.inputPrompt(prompt);
-  if (!value || !value.trim()) throw new Error(`${prompt} is required.`);
-  return value.trim();
-}
-
 async function optionalAttendees(params) {
   const { quickAddApi } = env(params);
   const value = await quickAddApi.inputPrompt("attendees? optional, comma-separated");
   if (!value || !value.trim()) return [];
   return value.split(",").map((item) => item.trim()).filter(Boolean);
-}
-
-function formatWikilinkList(key, values) {
-  if (!values.length) return "";
-  const lines = values.map((value) => `  - "${escapeYamlString(wikilink(value))}"`);
-  return `${key}:\n${lines.join("\n")}`;
-}
-
-function wikilink(value) {
-  if (value.startsWith("[[") && value.endsWith("]]")) return value;
-  return `[[${value}]]`;
-}
-
-function escapeYamlString(value) {
-  return String(value).replace(/"/g, '\\"');
 }
 
 function journalModeValues(params, mode) {
@@ -651,55 +409,6 @@ function frontmatterInsertIndex(lines, key) {
   return lines.length;
 }
 
-function render(template, values) {
-  return stripEmptyFrontmatterLines(
-    template.replace(/{{(\w+)}}/g, (_, key) => values[key] ?? "")
-  );
-}
-
-function stripEmptyFrontmatterLines(content) {
-  if (!content.startsWith("---\n")) return content;
-
-  const end = content.indexOf("\n---", 4);
-  if (end === -1) return content;
-
-  const frontmatter = content.slice(4, end)
-    .split("\n")
-    .filter((line) => line.trim().length > 0)
-    .join("\n");
-
-  return `---\n${frontmatter}${content.slice(end)}`;
-}
-
-function getFrontmatter(params, file) {
-  return env(params).app.metadataCache.getFileCache(file)?.frontmatter || null;
-}
-
-function isDraftJournal(frontmatter, org, file) {
-  return frontmatter.category === "journal"
-    && frontmatter.org === org
-    && Boolean(frontmatter.created)
-    && !frontmatter.drafted
-    && file?.basename?.startsWith("Draft ");
-}
-
-function hasRelationship(frontmatter) {
-  return Boolean(frontmatter.attendees || frontmatter.meeting || frontmatter.project || frontmatter.team);
-}
-
-function frontmatterValueMatchesLink(value, name) {
-  if (!value) return false;
-  if (Array.isArray(value)) return value.some((item) => frontmatterValueMatchesLink(item, name));
-  return String(value).includes(`[[${name}]]`);
-}
-
-function nearestContext(parts, marker, beforeIndex) {
-  for (let index = Math.min(beforeIndex, parts.length - 1); index >= 0; index--) {
-    if (parts[index] === marker) return parts[index + 1] || "";
-  }
-  return "";
-}
-
 function datetime(params) {
   return env(params).quickAddApi.date.now("YYYY-MM-DD HH-mm");
 }
@@ -708,26 +417,10 @@ function nowIso(params) {
   return env(params).quickAddApi.date.now("YYYY-MM-DDTHH:mm");
 }
 
-function safeFilename(value) {
-  return String(value)
-    .replace(/[\\/:*?"<>|]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function draftSubject(file) {
   return String(file?.basename || "")
     .replace(/^Draft\s+/, "")
     .trim();
-}
-
-function isFolder(file) {
-  return file && Array.isArray(file.children);
-}
-
-function notice(message) {
-  if (typeof Notice !== "undefined") new Notice(message);
-  return null;
 }
 
 function env(params) {
@@ -735,4 +428,5 @@ function env(params) {
     app: params.app,
     quickAddApi: params.quickAddApi,
   };
+}
 }

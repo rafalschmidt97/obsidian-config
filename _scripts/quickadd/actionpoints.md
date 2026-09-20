@@ -5,16 +5,19 @@
 // marker diverts an item to the Wishlist backlog (out of Tasks); a `#prio` marker additionally lists
 // it in Priority (a focused subset — it stays in Tasks). Source notes are the source of truth; these
 // files are read-only snapshots.
-// The shared org/back/frontmatter helpers are copied here because QuickAdd scripts cannot import
-// one another (they are referenced by path in QuickAdd config, not required as modules).
+// Shared helpers load through the vault API inside each invocation.
 
-const IGNORED_ORG_FOLDERS = new Set(["archive", "daily"]);
+module.exports = Object.fromEntries(["entry", "actionPoints", "actionPointsAuto"].map(name => [name, async (params, ...args) => {
+  const file = params.app.vault.getAbstractFileByPath("_scripts/shared/runtime.md");
+  if (!file) throw new Error("Shared runtime missing: _scripts/shared/runtime.md");
+  const runtime = new Function("module", `${await params.app.vault.read(file)}\nreturn module.exports;`)({ exports: {} });
+  return (await createFlows(await runtime.create(params.app)))[name](params, ...args);
+}]));
+
+async function createFlows(shared) {
+const { runBackable, choose, orgFolders, ensureFolder, openFile, getFrontmatter, capitalize, notice } = shared;
+
 const IGNORED_STATUSES = new Set(["archived", "obsolete"]);
-// Org priority is data, not code. Real values live in _scripts/config/orgs.json (git-ignored);
-// _scripts/config/orgs.example.json is the shared template. Loaded once per run by loadOrgConfig().
-// Empty ORG_ORDER falls back to a name-free rule (see sortOrgNames): alphabetical, personal last.
-let ORG_ORDER = [];
-const BACK_LABEL = "← Back";
 
 // `#wl` and `#prio` are body-level task markers. In an open checklist line, `#wl` diverts the item
 // to the Wishlist (out of Tasks) and is stripped from the Wishlist output; `#prio` additionally lists
@@ -30,7 +33,7 @@ const TASKS_INTRO = "Weekly notes, journals, projects, and books are the source 
 const PRIORITY_INTRO = "Focused view of `#prio`-tagged open tasks from the same `## Tasks` sections in weekly notes, journals, projects, and books — these also remain in Tasks. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#prio` tag in the source to drop an item from Priority.";
 const WISHLIST_INTRO = "Backlog of `#wl`-tagged items pulled from the same `## Tasks` sections in weekly notes, journals, projects, and books — later / someday, not active work. The source note is the source of truth; this file is regenerated and does not sync checkbox changes back. Delete the `#wl` tag in the source to promote an item back to Tasks.";
 
-module.exports = {
+return {
   entry,
   actionPoints,
   actionPointsAuto,
@@ -39,7 +42,6 @@ module.exports = {
 // QuickAdd entry point. The manual `Tasks` choice passes settings.flow "actionPoints"; the
 // hidden runOnStartup choice passes "actionPointsAuto". No flow -> manual.
 async function entry(params, settings = {}) {
-  await loadOrgConfig(params);
   const flows = { actionPoints, actionPointsAuto };
   const flow = settings.flow ? flows[settings.flow] : actionPoints;
   if (!flow) throw new Error(`Unknown action-points flow: ${settings.flow}`);
@@ -241,107 +243,7 @@ function renderSnapshot(org, generatedAt, title, intro, sections) {
   return `${lines.join("\n").trimEnd()}\n`;
 }
 
-// --- shared helpers (copied per QuickAdd script; keep in sync with journal.md / templates.md) ---
-
-async function runBackable(action) {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    try {
-      return await action();
-    } catch (error) {
-      if (isBack(error)) continue;
-      throw error;
-    }
-  }
-  return null;
-}
-
-async function choose(params, labels, values, prompt, options = {}) {
-  const { quickAddApi } = env(params);
-  const canGoBack = options.back !== false;
-  const finalLabels = canGoBack ? [...labels, BACK_LABEL] : labels;
-  const finalValues = canGoBack ? [...values, BACK_LABEL] : values;
-  const selected = await quickAddApi.suggester(finalLabels, finalValues, prompt);
-  if (selected === BACK_LABEL) throw new BackSignal();
-  return selected;
-}
-
-class BackSignal extends Error {
-  constructor() {
-    super(BACK_LABEL);
-    this.name = "BackSignal";
-  }
-}
-
-function isBack(error) {
-  return error instanceof BackSignal || error?.name === "BackSignal";
-}
-
-function orgFolders(params) {
-  return env(params).app.vault.getRoot().children
-    .filter((child) => isFolder(child) && !child.name.startsWith("_") && !child.name.startsWith(".") && !IGNORED_ORG_FOLDERS.has(child.name))
-    .map((child) => child.name)
-    .sort(sortOrgNames);
-}
-
-function sortOrgNames(a, b) {
-  const aIndex = ORG_ORDER.indexOf(a);
-  const bIndex = ORG_ORDER.indexOf(b);
-  if (aIndex >= 0 || bIndex >= 0) return (aIndex < 0 ? Number.MAX_SAFE_INTEGER : aIndex) - (bIndex < 0 ? Number.MAX_SAFE_INTEGER : bIndex);
-  if ((a === "personal") !== (b === "personal")) return a === "personal" ? 1 : -1;
-  return a.localeCompare(b);
-}
-
-// Best-effort load of org priority from _scripts/config/orgs.json (falls back to orgs.example.json, then
-// to the name-free rule in sortOrgNames). Never throws: the vault must keep working with no config.
-async function loadOrgConfig(params) {
-  try {
-    const { app } = env(params);
-    for (const path of ["_scripts/config/orgs.json", "_scripts/config/orgs.example.json"]) {
-      const file = app.vault.getAbstractFileByPath(path);
-      if (!file) continue;
-      const parsed = JSON.parse(await app.vault.cachedRead(file));
-      ORG_ORDER = Array.isArray(parsed.order) ? parsed.order : [];
-      return;
-    }
-    ORG_ORDER = [];
-  } catch (e) {
-    ORG_ORDER = [];
-  }
-}
-
-async function ensureFolder(params, folderPath) {
-  const { app } = env(params);
-  if (!folderPath) return;
-  const parts = folderPath.split("/").filter(Boolean);
-  let current = "";
-  for (const part of parts) {
-    current = current ? `${current}/${part}` : part;
-    if (!app.vault.getAbstractFileByPath(current)) await app.vault.createFolder(current);
-  }
-}
-
-async function openFile(params, file) {
-  await env(params).app.workspace.getLeaf().openFile(file);
-  return file;
-}
-
-function getFrontmatter(params, file) {
-  return env(params).app.metadataCache.getFileCache(file)?.frontmatter || null;
-}
-
-function capitalize(value) {
-  return value.charAt(0).toUpperCase() + value.slice(1);
-}
-
-function notice(message) {
-  if (typeof Notice !== "undefined") new Notice(message);
-  return null;
-}
-
-function isFolder(file) {
-  return file && Array.isArray(file.children);
-}
-
 function env(params) {
   return { app: params.app, quickAddApi: params.quickAddApi };
+}
 }
