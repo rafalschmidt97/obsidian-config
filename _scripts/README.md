@@ -37,6 +37,8 @@ Frequent captures stay at the top level. `Entities` groups Person, Meeting, Proj
 Team, Book, Place, and Trip creation. `System` holds Daily, the Weekly submenu, Tasks, and the two startup refreshes.
 `⚡ Actions` groups Triage and Archive. The final three top-level entries are
 `⚡ Actions`, `📁 Entities`, and `⚙ System`, in that order.
+Capture order: Inbox, Journal, Note, Sport, Reflection, Monthly Reflection, Invoice,
+Document, Meal Plan, Transcript, Clipping. Keep the two reflection choices adjacent.
 Use native periodic-note tooling for normal daily/weekly access; QuickAdd keeps secondary utilities.
 Nested choices keep their original IDs and command flags so existing shortcuts
 continue to work. Apply menu edits to the private `quickadd/data.json` and the public

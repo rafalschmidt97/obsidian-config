@@ -43,6 +43,24 @@
       }
     },
     {
+      "id": "note",
+      "name": "Note",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "id": "note",
+        "name": "Note",
+        "commands": [{
+          "id": "note-script-1",
+          "name": "Note",
+          "type": "UserScript",
+          "path": "_scripts/quickadd/templates.md",
+          "settings": { "flow": "note" }
+        }]
+      }
+    },
+    {
       "id": "journal-sport",
       "name": "Sport",
       "type": "Macro",
@@ -79,44 +97,22 @@
       }
     },
     {
-      "id": "note",
-      "name": "Note",
+      "id": "monthly-reflection",
+      "name": "Monthly Reflection",
       "type": "Macro",
       "command": true,
       "runOnStartup": false,
       "macro": {
-        "id": "note",
-        "name": "Note",
+        "id": "monthly-reflection",
+        "name": "Monthly Reflection",
         "commands": [
           {
-            "id": "note-script-1",
-            "name": "Note",
+            "id": "monthly-reflection-script-1",
+            "name": "Monthly Reflection",
             "type": "UserScript",
             "path": "_scripts/quickadd/templates.md",
             "settings": {
-              "flow": "note"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "id": "clipping",
-      "name": "Clipping",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "clipping",
-        "name": "Clipping",
-        "commands": [
-          {
-            "id": "clipping-script-1",
-            "name": "Clipping",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "clipping"
+              "flow": "monthlyReflection"
             }
           }
         ]
@@ -167,50 +163,6 @@
       }
     },
     {
-      "id": "transcript",
-      "name": "Transcript",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "transcript",
-        "name": "Transcript",
-        "commands": [
-          {
-            "id": "transcript-script-1",
-            "name": "Transcript",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "transcript"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "id": "monthly-reflection",
-      "name": "Monthly Reflection",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "monthly-reflection",
-        "name": "Monthly Reflection",
-        "commands": [
-          {
-            "id": "monthly-reflection-script-1",
-            "name": "Monthly Reflection",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "monthlyReflection"
-            }
-          }
-        ]
-      }
-    },
-    {
       "id": "meal-plan",
       "name": "Meal Plan",
       "type": "Macro",
@@ -230,6 +182,42 @@
             }
           }
         ]
+      }
+    },
+    {
+      "id": "transcript",
+      "name": "Transcript",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "id": "transcript",
+        "name": "Transcript",
+        "commands": [{
+          "id": "transcript-script-1",
+          "name": "Transcript",
+          "type": "UserScript",
+          "path": "_scripts/quickadd/templates.md",
+          "settings": { "flow": "transcript" }
+        }]
+      }
+    },
+    {
+      "id": "clipping",
+      "name": "Clipping",
+      "type": "Macro",
+      "command": true,
+      "runOnStartup": false,
+      "macro": {
+        "id": "clipping",
+        "name": "Clipping",
+        "commands": [{
+          "id": "clipping-script-1",
+          "name": "Clipping",
+          "type": "UserScript",
+          "path": "_scripts/quickadd/templates.md",
+          "settings": { "flow": "clipping" }
+        }]
       }
     },
     {

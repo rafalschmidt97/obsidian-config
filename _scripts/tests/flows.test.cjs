@@ -361,9 +361,9 @@ test('QuickAdd menu nests entity creation and Tasks without losing existing comm
   assert.equal(new Set(all.map(c => c.id)).size, all.length);
   assert.equal(all.filter(c => c.type === 'Macro').length, 27);
   assert.equal(all.filter(c => c.runOnStartup).length, 2);
-  assert.deepEqual(rootIds, ['inbox', 'journal', 'journal-sport', 'journal-reflection',
-    'note', 'clipping', 'invoice', 'document', 'transcript',
-    'monthly-reflection', 'meal-plan', 'actions-menu', 'entities-menu', 'system-menu']);
+  assert.deepEqual(rootIds, ['inbox', 'journal', 'note', 'journal-sport', 'journal-reflection',
+    'monthly-reflection', 'invoice', 'document', 'meal-plan', 'transcript', 'clipping',
+    'actions-menu', 'entities-menu', 'system-menu']);
   const localPath = path.join(root, '.obsidian/plugins/quickadd/data.json');
   if (fs.existsSync(localPath)) {
     const local = JSON.parse(fs.readFileSync(localPath, 'utf8'));
