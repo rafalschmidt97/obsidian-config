@@ -21,6 +21,9 @@ What went well this month? What didn't go well and why? What would I like to imp
 filters:
   and:
     - category != "daily"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - org == this.org
     - created >= this.start
     - created < this.end

@@ -25,6 +25,7 @@
 # 3a) Keep per-user and household-specific files out of the repo.
 #     Real org priority lives here (orgs.example.json ships instead).
 /_scripts/config/orgs.json
+/_scripts/config/areas.json
 #     Real household meal-plan placement lives here (mealplan.example.json ships instead).
 /_scripts/config/mealplan.json
 #     The Meal Plan template hardcodes a real household project + names.

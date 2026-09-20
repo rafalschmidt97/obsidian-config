@@ -1,0 +1,17 @@
+filters:
+  and:
+    - category == "journal"
+    - this.area
+    - area == this.area
+    - file.path != this.file.path
+    - '!file.path.split("/").contains("archive")'
+    - '!file.name.startsWith("Draft ")'
+    - status != "archived"
+    - status != "obsolete"
+    - date(created) < date(this.created)
+views:
+  - type: table
+    name: Previous entries
+    limit: 5
+    order: [file.name, created, type]
+    sort: [{property: created, direction: DESC}]

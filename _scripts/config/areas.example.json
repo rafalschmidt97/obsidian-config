@@ -1,0 +1,7 @@
+{
+  "personal": ["home", "cooking", "travel", "car", "friends", "health", "growth", "finances"],
+  "defaults": {
+    "sport": "personal/areas/health/Health",
+    "mealPlan": "personal/areas/cooking/Cooking"
+  }
+}

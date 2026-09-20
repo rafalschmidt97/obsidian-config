@@ -2,6 +2,7 @@
 org: personal
 category: place
 type: {{type}}
-topic: "{{topic}}"
+placeKind: {{placeKind}}
+{{relationshipLines}}
 created: {{created}}
 ---

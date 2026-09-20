@@ -2,7 +2,8 @@
 org: personal
 category: book
 created: {{created}}
-{{topicLine}}
+{{relationshipLines}}
+{{statusLine}}
 ---
 
 ## Key Ideas

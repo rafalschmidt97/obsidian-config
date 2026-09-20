@@ -51,13 +51,17 @@
       "macro": {
         "id": "note",
         "name": "Note",
-        "commands": [{
-          "id": "note-script-1",
-          "name": "Note",
-          "type": "UserScript",
-          "path": "_scripts/quickadd/templates.md",
-          "settings": { "flow": "note" }
-        }]
+        "commands": [
+          {
+            "id": "note-script-1",
+            "name": "Note",
+            "type": "UserScript",
+            "path": "_scripts/quickadd/templates.md",
+            "settings": {
+              "flow": "note"
+            }
+          }
+        ]
       }
     },
     {
@@ -69,13 +73,17 @@
       "macro": {
         "id": "journal-sport",
         "name": "Sport",
-        "commands": [{
-          "id": "journal-sport-script-1",
-          "name": "Sport",
-          "type": "UserScript",
-          "path": "_scripts/quickadd/journal.md",
-          "settings": { "flow": "sport" }
-        }]
+        "commands": [
+          {
+            "id": "journal-sport-script-1",
+            "name": "Sport",
+            "type": "UserScript",
+            "path": "_scripts/quickadd/journal.md",
+            "settings": {
+              "flow": "sport"
+            }
+          }
+        ]
       }
     },
     {
@@ -87,13 +95,17 @@
       "macro": {
         "id": "journal-reflection",
         "name": "Reflection",
-        "commands": [{
-          "id": "journal-reflection-script-1",
-          "name": "Reflection",
-          "type": "UserScript",
-          "path": "_scripts/quickadd/journal.md",
-          "settings": { "flow": "reflection" }
-        }]
+        "commands": [
+          {
+            "id": "journal-reflection-script-1",
+            "name": "Reflection",
+            "type": "UserScript",
+            "path": "_scripts/quickadd/journal.md",
+            "settings": {
+              "flow": "reflection"
+            }
+          }
+        ]
       }
     },
     {
@@ -193,13 +205,17 @@
       "macro": {
         "id": "transcript",
         "name": "Transcript",
-        "commands": [{
-          "id": "transcript-script-1",
-          "name": "Transcript",
-          "type": "UserScript",
-          "path": "_scripts/quickadd/templates.md",
-          "settings": { "flow": "transcript" }
-        }]
+        "commands": [
+          {
+            "id": "transcript-script-1",
+            "name": "Transcript",
+            "type": "UserScript",
+            "path": "_scripts/quickadd/templates.md",
+            "settings": {
+              "flow": "transcript"
+            }
+          }
+        ]
       }
     },
     {
@@ -211,13 +227,17 @@
       "macro": {
         "id": "clipping",
         "name": "Clipping",
-        "commands": [{
-          "id": "clipping-script-1",
-          "name": "Clipping",
-          "type": "UserScript",
-          "path": "_scripts/quickadd/templates.md",
-          "settings": { "flow": "clipping" }
-        }]
+        "commands": [
+          {
+            "id": "clipping-script-1",
+            "name": "Clipping",
+            "type": "UserScript",
+            "path": "_scripts/quickadd/templates.md",
+            "settings": {
+              "flow": "clipping"
+            }
+          }
+        ]
       }
     },
     {
@@ -228,16 +248,70 @@
       "runOnStartup": false,
       "choices": [
         {
-          "id": "triage", "name": "Triage", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "triage", "name": "Triage", "commands": [
-            { "id": "triage-script-1", "name": "Triage", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "triage" } }
-          ] }
+          "id": "reassign",
+          "name": "Move / reassign",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "reassign",
+            "name": "Move / reassign",
+            "commands": [
+              {
+                "id": "reassign-script-1",
+                "name": "Move / reassign",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "reassign"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "archive", "name": "Archive", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "archive", "name": "Archive", "commands": [
-            { "id": "archive-script-1", "name": "Archive", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "archive" } }
-          ] }
+          "id": "triage",
+          "name": "Triage",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "triage",
+            "name": "Triage",
+            "commands": [
+              {
+                "id": "triage-script-1",
+                "name": "Triage",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "triage"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "archive",
+          "name": "Archive",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "archive",
+            "name": "Archive",
+            "commands": [
+              {
+                "id": "archive-script-1",
+                "name": "Archive",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "archive"
+                }
+              }
+            ]
+          }
         }
       ]
     },
@@ -249,46 +323,180 @@
       "runOnStartup": false,
       "choices": [
         {
-          "id": "person", "name": "Person", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "person", "name": "Person", "commands": [
-            { "id": "person-script-1", "name": "Person", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "person" } }
-          ] }
+          "id": "area",
+          "name": "Area",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "area",
+            "name": "Area",
+            "commands": [
+              {
+                "id": "area-script-1",
+                "name": "Area",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "area"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "meeting", "name": "Meeting", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "meeting", "name": "Meeting", "commands": [
-            { "id": "meeting-script-1", "name": "Meeting", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "meeting" } }
-          ] }
+          "id": "person",
+          "name": "Person",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "person",
+            "name": "Person",
+            "commands": [
+              {
+                "id": "person-script-1",
+                "name": "Person",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "person"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "project", "name": "Project", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "project", "name": "Project", "commands": [
-            { "id": "project-script-1", "name": "Project", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "project" } }
-          ] }
+          "id": "meeting",
+          "name": "Meeting",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "meeting",
+            "name": "Meeting",
+            "commands": [
+              {
+                "id": "meeting-script-1",
+                "name": "Meeting",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "meeting"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "team", "name": "Team", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "team", "name": "Team", "commands": [
-            { "id": "team-script-1", "name": "Team", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "team" } }
-          ] }
+          "id": "project",
+          "name": "Project",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "project",
+            "name": "Project",
+            "commands": [
+              {
+                "id": "project-script-1",
+                "name": "Project",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "project"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "book", "name": "Book", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "book", "name": "Book", "commands": [
-            { "id": "book-script-1", "name": "Book", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "book" } }
-          ] }
+          "id": "team",
+          "name": "Team",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "team",
+            "name": "Team",
+            "commands": [
+              {
+                "id": "team-script-1",
+                "name": "Team",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "team"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "place", "name": "Place", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "place", "name": "Place", "commands": [
-            { "id": "place-script-1", "name": "Place", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "place" } }
-          ] }
+          "id": "book",
+          "name": "Book",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "book",
+            "name": "Book",
+            "commands": [
+              {
+                "id": "book-script-1",
+                "name": "Book",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "book"
+                }
+              }
+            ]
+          }
         },
         {
-          "id": "trip", "name": "Trip", "type": "Macro", "command": true, "runOnStartup": false,
-          "macro": { "id": "trip", "name": "Trip", "commands": [
-            { "id": "trip-script-1", "name": "Trip", "type": "UserScript", "path": "_scripts/quickadd/templates.md", "settings": { "flow": "trip" } }
-          ] }
+          "id": "place",
+          "name": "Place",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "place",
+            "name": "Place",
+            "commands": [
+              {
+                "id": "place-script-1",
+                "name": "Place",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "place"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "trip",
+          "name": "Trip",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "trip",
+            "name": "Trip",
+            "commands": [
+              {
+                "id": "trip-script-1",
+                "name": "Trip",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "trip"
+                }
+              }
+            ]
+          }
         }
       ]
     },
@@ -299,6 +507,28 @@
       "command": false,
       "runOnStartup": false,
       "choices": [
+        {
+          "id": "setup-areas",
+          "name": "Setup personal areas",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "setup-areas",
+            "name": "Setup personal areas",
+            "commands": [
+              {
+                "id": "setup-areas-script-1",
+                "name": "Setup personal areas",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "setupAreas"
+                }
+              }
+            ]
+          }
+        },
         {
           "id": "daily",
           "name": "Daily",
@@ -321,91 +551,103 @@
             ]
           }
         },
-    {
-      "id": "weekly-menu",
-      "name": "Weekly",
-      "type": "Multi",
-      "command": false,
-      "runOnStartup": false,
-      "choices": [
         {
-          "id": "weekly",
-          "name": "Create Weekly",
-          "type": "Macro",
-          "command": true,
+          "id": "weekly-menu",
+          "name": "Weekly",
+          "type": "Multi",
+          "command": false,
           "runOnStartup": false,
-          "macro": {
-            "id": "weekly",
-            "name": "Create Weekly",
-            "commands": [{
-              "id": "weekly-script-1",
+          "choices": [
+            {
+              "id": "weekly",
               "name": "Create Weekly",
-              "type": "UserScript",
-              "path": "_scripts/quickadd/templates.md",
-              "settings": { "flow": "weekly" }
-            }]
-          }
-        },
-        {
-          "id": "open-work-weekly",
-          "name": "Open Work Weekly",
-          "type": "Macro",
-          "command": true,
-          "runOnStartup": false,
-          "macro": {
-            "id": "open-work-weekly",
-            "name": "Open Work Weekly",
-            "commands": [{
-              "id": "open-work-weekly-script-1",
+              "type": "Macro",
+              "command": true,
+              "runOnStartup": false,
+              "macro": {
+                "id": "weekly",
+                "name": "Create Weekly",
+                "commands": [
+                  {
+                    "id": "weekly-script-1",
+                    "name": "Create Weekly",
+                    "type": "UserScript",
+                    "path": "_scripts/quickadd/templates.md",
+                    "settings": {
+                      "flow": "weekly"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "open-work-weekly",
               "name": "Open Work Weekly",
-              "type": "UserScript",
-              "path": "_scripts/quickadd/Open Weekly.md",
-              "settings": { "org": "work" }
-            }]
-          }
+              "type": "Macro",
+              "command": true,
+              "runOnStartup": false,
+              "macro": {
+                "id": "open-work-weekly",
+                "name": "Open Work Weekly",
+                "commands": [
+                  {
+                    "id": "open-work-weekly-script-1",
+                    "name": "Open Work Weekly",
+                    "type": "UserScript",
+                    "path": "_scripts/quickadd/Open Weekly.md",
+                    "settings": {
+                      "org": "work"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "open-personal-weekly",
+              "name": "Open Personal Weekly",
+              "type": "Macro",
+              "command": true,
+              "runOnStartup": false,
+              "macro": {
+                "id": "open-personal-weekly",
+                "name": "Open Personal Weekly",
+                "commands": [
+                  {
+                    "id": "open-personal-weekly-script-1",
+                    "name": "Open Personal Weekly",
+                    "type": "UserScript",
+                    "path": "_scripts/quickadd/Open Weekly.md",
+                    "settings": {
+                      "org": "personal"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
         },
         {
-          "id": "open-personal-weekly",
-          "name": "Open Personal Weekly",
+          "id": "action-points",
+          "name": "Tasks",
           "type": "Macro",
           "command": true,
           "runOnStartup": false,
           "macro": {
-            "id": "open-personal-weekly",
-            "name": "Open Personal Weekly",
-            "commands": [{
-              "id": "open-personal-weekly-script-1",
-              "name": "Open Personal Weekly",
-              "type": "UserScript",
-              "path": "_scripts/quickadd/Open Weekly.md",
-              "settings": { "org": "personal" }
-            }]
-          }
-        }
-      ]
-    },
-    {
-      "id": "action-points",
-      "name": "Tasks",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "action-points",
-        "name": "Tasks",
-        "commands": [
-          {
-            "id": "action-points-script-1",
+            "id": "action-points",
             "name": "Tasks",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/actionpoints.md",
-            "settings": {
-              "flow": "actionPoints"
-            }
+            "commands": [
+              {
+                "id": "action-points-script-1",
+                "name": "Tasks",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/actionpoints.md",
+                "settings": {
+                  "flow": "actionPoints"
+                }
+              }
+            ]
           }
-        ]
-      }
-    },
+        },
         {
           "id": "action-points-startup",
           "name": "Tasks (startup refresh)",

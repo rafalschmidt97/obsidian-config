@@ -4,6 +4,7 @@ category: project
 created: {{created}}
 status: active
 {{parentLine}}
+{{relationshipLines}}
 ---
 
 ## Goal
@@ -24,6 +25,9 @@ status: active
 filters:
   and:
     - category == "project"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - parent == this
 views:
   - type: table
@@ -39,6 +43,9 @@ views:
 filters:
   and:
     - category == "journal"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - project == this
 views:
   - type: table
@@ -54,6 +61,9 @@ views:
 filters:
   and:
     - category == "note"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - project == this
 views:
   - type: table

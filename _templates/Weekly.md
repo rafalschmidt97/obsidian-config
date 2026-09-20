@@ -22,6 +22,9 @@ next: "[[{{next}}]]"
 filters:
   and:
     - category != "daily"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - category != "weekly"
     - org == this.org
     - created >= this.start

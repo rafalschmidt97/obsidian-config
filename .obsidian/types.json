@@ -4,6 +4,10 @@
     "cssclasses": "multitext",
     "tags": "tags",
     "drafted": "datetime",
-    "type": "text"
+    "type": "text",
+    "area": "text",
+    "category": "text",
+    "legacyTopic": "text",
+    "placeKind": "text"
   }
 }

@@ -1,6 +1,6 @@
 ---
 org: personal
 category: invoice
-topic: "{{topic}}"
+{{relationshipLines}}
 created: {{created}}
 ---

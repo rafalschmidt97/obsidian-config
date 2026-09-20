@@ -1,0 +1,25 @@
+filters:
+  and:
+    - area == this
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
+views:
+  - type: table
+    name: All
+    order: [file.name, category, type, created]
+    sort: [{property: created, direction: DESC}]
+  - type: table
+    name: Notes and documents
+    filters: 'category != "journal" && category != "project" && category != "meeting"'
+    order: [file.name, category, created]
+  - type: table
+    name: Journal
+    filters: 'category == "journal"'
+    sort: [{property: created, direction: DESC}]
+  - type: table
+    name: Projects
+    filters: 'category == "project"'
+  - type: table
+    name: Meetings
+    filters: 'category == "meeting"'

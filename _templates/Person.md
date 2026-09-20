@@ -16,6 +16,9 @@ role:
 ```base
 filters:
   and:
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - category == "journal"
     - attendees.contains(this)
 views:

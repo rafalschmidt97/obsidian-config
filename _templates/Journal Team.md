@@ -3,14 +3,14 @@ org: {{org}}
 category: journal
 type: team
 created: {{created}}
-team: "[[{{team}}]]"
+{{relationshipLines}}
 ---
 {{draftPlanningSection}}
 
-## Notes
+{{history}}
 
-- 
+## Notes
 
 ## Tasks
 
-- [ ] 
+- [ ]

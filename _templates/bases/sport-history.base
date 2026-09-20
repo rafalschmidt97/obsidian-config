@@ -2,7 +2,7 @@ filters:
   and:
     - category == "journal"
     - type == "sport"
-    - '!file.path.startsWith("archive/")'
+    - '!file.path.split("/").contains("archive")'
     - '!file.name.startsWith("Draft ")'
     - status != "archived"
     - status != "obsolete"

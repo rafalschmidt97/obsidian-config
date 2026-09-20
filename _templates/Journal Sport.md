@@ -3,6 +3,7 @@ org: {{org}}
 category: journal
 created: {{created}}
 type: sport
+{{relationshipLines}}
 ---
 {{draftPlanningSection}}
 

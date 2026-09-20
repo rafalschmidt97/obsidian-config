@@ -1,16 +1,16 @@
 ---
 org: {{org}}
 category: journal
-created: {{created}}
 {{typeLine}}
-{{attendeesLine}}
+created: {{created}}
+{{relationshipLines}}
 ---
 {{draftPlanningSection}}
 
-## Notes
+{{history}}
 
-- 
+## Notes
 
 ## Tasks
 
-- [ ] 
+- [ ]

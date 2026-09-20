@@ -1,5 +1,5 @@
 ---
-topic: indexes
+category: index
 ---
 
 # Categories
@@ -7,7 +7,8 @@ topic: indexes
 ```base
 filters:
   and:
-    - topic == "indexes"
+    - category == "index"
+    - '!file.path.split("/").contains("archive")'
 views:
   - type: table
     name: Categories

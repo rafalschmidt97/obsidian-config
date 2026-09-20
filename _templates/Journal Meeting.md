@@ -3,15 +3,14 @@ org: {{org}}
 category: journal
 type: meeting
 created: {{created}}
-meeting: "[[{{meeting}}]]"
-{{contextLines}}
+{{relationshipLines}}
 ---
 {{draftPlanningSection}}
 
-## Notes
+{{history}}
 
-- 
+## Notes
 
 ## Tasks
 
-- [ ] 
+- [ ]

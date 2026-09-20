@@ -15,7 +15,7 @@ module.exports = Object.fromEntries(["entry", "actionPoints", "actionPointsAuto"
 }]));
 
 async function createFlows(shared) {
-const { runBackable, choose, orgFolders, ensureFolder, openFile, getFrontmatter, capitalize, notice } = shared;
+const { runBackable, choose, orgFolders, ensureFolder, openFile, getFrontmatter, capitalize, notice, isArchived } = shared;
 
 const IGNORED_STATUSES = new Set(["archived", "obsolete"]);
 
@@ -104,23 +104,27 @@ async function refreshViews(params, org) {
   const weekly = await collectGroups(params, org, "weekly", "Tasks");
   const journal = await collectGroups(params, org, "journal", "Tasks");
   const project = await collectGroups(params, org, "project", "Tasks");
+  const area = await collectGroups(params, org, "area", "Tasks");
   const book = await collectGroups(params, org, "book", "Tasks");
 
   await writeView(params, tasksPathForOrg(org), renderSnapshot(org, generatedAt, "Tasks", TASKS_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.actionGroups, empty: "No open weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.actionGroups, empty: "No open journal tasks found." },
+    ...(area.actionGroups.length ? [{ heading: "Area Tasks", groups: area.actionGroups, empty: "" }] : []),
     ...(project.actionGroups.length ? [{ heading: "Project Tasks", groups: project.actionGroups, empty: "" }] : []),
     ...(book.actionGroups.length ? [{ heading: "Book Tasks", groups: book.actionGroups, empty: "" }] : []),
   ]));
   await writeView(params, priorityPathForOrg(org), renderSnapshot(org, generatedAt, "Priority", PRIORITY_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.priorityGroups, empty: "No priority weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.priorityGroups, empty: "No priority journal tasks found." },
+    ...(area.priorityGroups.length ? [{ heading: "Area Tasks", groups: area.priorityGroups, empty: "" }] : []),
     ...(project.priorityGroups.length ? [{ heading: "Project Tasks", groups: project.priorityGroups, empty: "" }] : []),
     ...(book.priorityGroups.length ? [{ heading: "Book Tasks", groups: book.priorityGroups, empty: "" }] : []),
   ]));
   await writeView(params, wishlistPathForOrg(org), renderSnapshot(org, generatedAt, "Wishlist", WISHLIST_INTRO, [
     { heading: "Weekly Tasks", groups: weekly.wishlistGroups, empty: "No wishlist weekly tasks found." },
     { heading: "Journal Tasks", groups: journal.wishlistGroups, empty: "No wishlist journal tasks found." },
+    ...(area.wishlistGroups.length ? [{ heading: "Area Tasks", groups: area.wishlistGroups, empty: "" }] : []),
     ...(project.wishlistGroups.length ? [{ heading: "Project Tasks", groups: project.wishlistGroups, empty: "" }] : []),
     ...(book.wishlistGroups.length ? [{ heading: "Book Tasks", groups: book.wishlistGroups, empty: "" }] : []),
   ]));
@@ -136,7 +140,7 @@ async function writeView(params, path, content) {
 function sourceFilesForOrg(params, org, category) {
   const { app } = env(params);
   return app.vault.getMarkdownFiles()
-    .filter((file) => !file.path.startsWith(".trash/"))
+    .filter((file) => !isArchived(file.path))
     .filter((file) => file.path.startsWith(`${org}/`))
     .filter((file) => {
       const fm = getFrontmatter(params, file);
@@ -230,7 +234,7 @@ function renderSnapshot(org, generatedAt, title, intro, sections) {
   const lines = [
     "---",
     `org: ${org}`,
-    "topic: indexes",
+    "category: index",
     `created: ${generatedAt}`,
     "---",
     "",

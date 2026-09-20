@@ -12,6 +12,9 @@ week:
 filters:
   and:
     - category == "journal"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - created >= this.date
     - created < this.date + "1d"
 views:
@@ -34,6 +37,9 @@ views:
 filters:
   and:
     - category != "daily"
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
     - category != "weekly"
     - category != "journal"
     - created >= this.date

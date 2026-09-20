@@ -37,7 +37,7 @@ async function create(app) {
     findProjectFolders, findTopLevelProjectFolders, findMeetingFolders, findFolders, folderNames,
     runBackable, choose, requiredInput, notice, wikilink, escapeYamlString, formatWikilinkList,
     journalMatchesDraft, isDraftJournal, frontmatterValueMatchesLink,
-    noteRouteValues, weeklyValues, dailyValues,
+    noteRouteValues, weeklyValues, dailyValues, isArchived,
   };
 }
 
@@ -86,6 +86,7 @@ function cleanTopic(value) { return String(value).split("/").map(safeFilename).f
 function capitalize(value) { return value.charAt(0).toUpperCase() + value.slice(1); }
 function isFolder(file) { return file && Array.isArray(file.children); }
 function getFrontmatter({ app }, file) { return app.metadataCache.getFileCache(file)?.frontmatter || null; }
+function isArchived(path) { return path.split('/').some(part => ['archive', 'archives', '.trash'].includes(part.toLowerCase())); }
 function notice(message) { if (typeof Notice !== "undefined") new Notice(message); return null; }
 
 function fmtLocal(value) {
@@ -100,7 +101,7 @@ function parseDay(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec((value || "").trim());
   if (!match) return null;
   const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
-  return Number.isNaN(d.getTime()) ? null : startOfDay(d);
+  return Number.isNaN(d.getTime()) || fmtLocal(d)!==value.trim() ? null : startOfDay(d);
 }
 function weekRange(value) {
   const current = startOfDay(value);
@@ -140,10 +141,10 @@ function noteRouteValues(frontmatter) {
     relationshipLines: Object.entries(relationships).map(([key, value]) => `${key}: ${JSON.stringify(value)}`).join("\n") };
 }
 function detailsBlock() { return `## Details\n\n| | |\n|---|---|\n| Teams | |\n| Supervisor | |\n| Email | |\n| GitHub | |\n| Mobile | |\n| Board | |\n`; }
-const ignored = name => /^[_.]/.test(name) || ["Archives", "journal", "meetings", "references"].includes(name);
+const ignored = name => /^[_.]/.test(name) || ["archive", "archives", "journal", "meetings", "references"].includes(name.toLowerCase());
 function folderNames({ app }, base) {
   return (app.vault.getAbstractFileByPath(base)?.children || [])
-    .filter(f => isFolder(f) && !f.name.startsWith("_") && f.name !== "Archives")
+    .filter(f => isFolder(f) && !f.name.startsWith("_") && !isArchived(f.path))
     .map(f => f.name).sort((a, b) => a.localeCompare(b));
 }
 function findTopLevelProjectFolders({ app }, base) {
@@ -164,7 +165,7 @@ function findProjectFolders(params, base) {
 function findMeetingFolders({ app }, base) {
   const results = [];
   const walk = folder => {
-    if (!isFolder(folder)) return;
+    if (!isFolder(folder) || isArchived(folder.path)) return;
     if (folder.name === "meetings") {
       for (const child of folder.children.filter(isFolder)) {
         const parts = child.path.split("/"), index = parts.length - 2;
@@ -182,7 +183,7 @@ function findMeetingFolders({ app }, base) {
 function findFolders({ app }, base) {
   const results = [];
   const walk = folder => {
-    if (!isFolder(folder)) return;
+    if (!isFolder(folder) || isArchived(folder.path)) return;
     for (const child of folder.children) {
       if (!isFolder(child) || child.name.startsWith("_") || child.name === "Archives") continue;
       const topic = child.path.slice(base.length + 1);
@@ -203,6 +204,7 @@ async function runBackable(action) {
 async function choose({ quickAddApi }, labels, values, prompt, options = {}) {
   const back = options.back !== false;
   const result = await quickAddApi.suggester(back ? [...labels, BACK_LABEL] : labels, back ? [...values, BACK_LABEL] : values, prompt);
+  if (result === undefined || (result === null && !values.includes(null))) throw new Error('Capture cancelled.');
   if (result === BACK_LABEL) throw new BackSignal();
   return result;
 }
