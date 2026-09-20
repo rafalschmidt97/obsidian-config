@@ -349,8 +349,8 @@ test('QuickAdd menu nests entity creation and Tasks without losing existing comm
   assert.equal(entities.type, 'Multi');
   assert.deepEqual(entities.choices.map(c => c.id), ['person', 'meeting', 'project', 'team']);
   const system = config.choices.find(c => c.id === 'system-menu');
-  assert.deepEqual(system.choices.map(c => c.id), ['action-points', 'action-points-startup', 'periodic-startup']);
-  for (const id of ['person', 'meeting', 'project', 'team', 'action-points']) assert.ok(!rootIds.includes(id));
+  assert.deepEqual(system.choices.map(c => c.id), ['daily', 'action-points', 'action-points-startup', 'periodic-startup']);
+  for (const id of ['person', 'meeting', 'project', 'team', 'daily', 'action-points']) assert.ok(!rootIds.includes(id));
   const flatten = choices => choices.flatMap(c => [c, ...flatten(c.choices || [])]);
   const all = flatten(config.choices);
   assert.equal(new Set(all.map(c => c.id)).size, all.length);
@@ -358,7 +358,7 @@ test('QuickAdd menu nests entity creation and Tasks without losing existing comm
   assert.equal(all.filter(c => c.runOnStartup).length, 2);
   assert.deepEqual(rootIds, ['inbox', 'triage', 'archive', 'journal', 'journal-sport', 'journal-reflection',
     'note', 'entities-menu', 'book', 'clipping', 'invoice', 'document', 'place', 'trip', 'transcript',
-    'daily', 'weekly-menu', 'monthly-reflection', 'meal-plan', 'system-menu']);
+    'weekly-menu', 'monthly-reflection', 'meal-plan', 'system-menu']);
   const localPath = path.join(root, '.obsidian/plugins/quickadd/data.json');
   if (fs.existsSync(localPath)) {
     const local = JSON.parse(fs.readFileSync(localPath, 'utf8'));

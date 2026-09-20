@@ -396,28 +396,6 @@
       }
     },
     {
-      "id": "daily",
-      "name": "Daily",
-      "type": "Macro",
-      "command": true,
-      "runOnStartup": false,
-      "macro": {
-        "id": "daily",
-        "name": "Daily",
-        "commands": [
-          {
-            "id": "daily-script-1",
-            "name": "Daily",
-            "type": "UserScript",
-            "path": "_scripts/quickadd/templates.md",
-            "settings": {
-              "flow": "daily"
-            }
-          }
-        ]
-      }
-    },
-    {
       "id": "weekly-menu",
       "name": "Weekly",
       "type": "Multi",
@@ -543,6 +521,28 @@
       "command": false,
       "runOnStartup": false,
       "choices": [
+        {
+          "id": "daily",
+          "name": "Daily",
+          "type": "Macro",
+          "command": true,
+          "runOnStartup": false,
+          "macro": {
+            "id": "daily",
+            "name": "Daily",
+            "commands": [
+              {
+                "id": "daily-script-1",
+                "name": "Daily",
+                "type": "UserScript",
+                "path": "_scripts/quickadd/templates.md",
+                "settings": {
+                  "flow": "daily"
+                }
+              }
+            ]
+          }
+        },
     {
       "id": "action-points",
       "name": "Tasks",
