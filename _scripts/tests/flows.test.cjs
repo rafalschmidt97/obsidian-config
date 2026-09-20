@@ -216,3 +216,17 @@ test('folder-click create new leaves a draft intact; activation uses collision-s
     assert.equal(f.files.has(`${base}/Draft Alex.md`), choice === 'create new');
   }
 });
+
+test('Open Weekly uses canonical local config, example fallback and explicit overrides', async () => {
+  for (const [configPath, config, settings, expected] of [
+    ['_scripts/config/orgs.json', { default: 'personal' }, {}, 'personal'],
+    ['_scripts/config/orgs.example.json', { order: ['personal', 'work'] }, {}, 'personal'],
+    ['_scripts/config/orgs.json', { default: 'personal' }, { org: 'work' }, 'work'],
+  ]) {
+    const f = fixture([[configPath, JSON.stringify(config)]]);
+    f.template('Weekly');
+    await f.load('_scripts/quickadd/Open Weekly.md').entry(f, settings);
+    assert.equal(f.opened.length, 1);
+    assert.ok(f.opened[0].startsWith(`${expected}/weekly/`));
+  }
+});

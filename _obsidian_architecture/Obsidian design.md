@@ -918,6 +918,8 @@ Filename includes org: `2026-05-25--05-31 Work.md`. Frontmatter has `previous`/`
 
 QuickAdd should not grow general-purpose `Open {entity}` commands. Periodic notes are the exception because "current daily/current weekly" is deterministic and open-or-create avoids duplicate period notes. For people, projects, meetings, teams, and normal notes, use search, links, Bases, or file navigation for opening; reserve QuickAdd for creation/capture.
 
+`Open Weekly` uses the same `_scripts/config/orgs.json` path as the other scripts, with `_scripts/config/orgs.example.json` as fallback. Explicit `settings.org` takes precedence over the configured default.
+
 ### Monthly Reflection
 
 A journal entry (`category: journal`, `type: reflection`) written at the start of a new month reflecting on the previous month. Has `start`/`end` covering the month, `previous`/`next` wikilinks to adjacent same-org months.

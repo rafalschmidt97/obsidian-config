@@ -6,13 +6,13 @@ async function entry(params, settings = {}) {
   return await openWeekly(params, org);
 }
 
-// Name-free default org: prefer _scripts/orgs.json (falls back to orgs.example.json), then the
+// Name-free default org: prefer _scripts/config/orgs.json (falls back to orgs.example.json), then the
 // first non-personal active org folder. The QuickAdd weekly choices always pass settings.org,
 // so this only matters when the script is run without one.
 async function defaultOrg(params) {
   const { app } = env(params);
   try {
-    for (const path of ["_scripts/orgs.json", "_scripts/orgs.example.json"]) {
+    for (const path of ["_scripts/config/orgs.json", "_scripts/config/orgs.example.json"]) {
       const file = app.vault.getAbstractFileByPath(path);
       if (!file) continue;
       const parsed = JSON.parse(await app.vault.cachedRead(file));
