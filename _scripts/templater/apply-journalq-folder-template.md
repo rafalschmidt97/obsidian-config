@@ -33,7 +33,7 @@ if (!org) {
 const mode = await tp.system.suggester(["now", "draft"], ["now", "draft"], true, "mode?");
 const isDraft = mode === "draft";
 const offerDraft = async (context) => {
-  if (isDraft) return false;
+  if (isDraft || ["sport", "reflection"].includes(context.type)) return false;
   const journal = await runtime.loadModule(app, "_scripts/quickadd/journal.md");
   const activated = await journal.activateFolderDraft(
     { app, quickAddApi: { date: tp.date } }, folder, { org, ...context },
@@ -45,10 +45,10 @@ const offerDraft = async (context) => {
 
 if (parts.length === 2 && parts[1] === "journal") {
   const typeOptions = isDraft
-    ? ["none", "event", "reflection", "sport"]
+    ? ["event"]
     : ["none", "event", "reflection", "monthly reflection", "sport"];
   const typeValues = isDraft
-    ? ["", "event", "reflection", "sport"]
+    ? ["event"]
     : ["", "event", "reflection", "monthly reflection", "sport"];
   const type = await tp.system.suggester(typeOptions, typeValues, true, "type?");
   if (type === "monthly reflection") {

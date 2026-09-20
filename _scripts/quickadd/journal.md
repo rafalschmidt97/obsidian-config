@@ -80,10 +80,12 @@ async function draft(params, selectedOrg) {
 async function journal(params, selectedOrg, options = {}) {
   const org = selectedOrg ?? await chooseOrg(params);
   const type = options.type || "event";
+  const supportsDraft = type === "event";
+  options = supportsDraft ? options : { ...options, draft: false, skipDraftSearch: true };
 
   const matchesDraft = (frontmatter, file) => journalMatchesDraft(frontmatter, file, { org, type });
 
-  if (!options.draft) {
+  if (supportsDraft && !options.draft) {
     const drafts = await findMatchingDrafts(params, `${org}/journal`, matchesDraft);
     if (drafts.length > 0) {
       const choices = [
@@ -126,8 +128,7 @@ async function reflection(params, selectedOrg, options = {}) {
 }
 
 async function typedJournal(params, org, type, options) {
-  const isDraft = options.draft ?? ((await choose(params, ["now", "draft"], ["now", "draft"], "mode?")) === "draft");
-  return await journal(params, org, { ...options, type, draft: isDraft });
+  return await journal(params, org, { ...options, type, draft: false, skipDraftSearch: true });
 }
 
 async function person(params, selectedOrg, options = {}) {

@@ -315,21 +315,19 @@ test('QuickAdd event journals go straight to title in now and draft modes', asyn
   }
 });
 
-test('Sport and Reflection shortcuts choose type without asking, including draft activation', async () => {
+test('Sport and Reflection create immediate entries even with a legacy draft or draft setting', async () => {
   for (const type of ['sport', 'reflection']) {
     const org = type === 'sport' ? 'personal' : 'work';
     const orgAnswers = type === 'sport' ? [] : [org];
-    const f = fixture([], [...orgAnswers, 'draft', 'Session', ...orgAnswers, 'now', 'use draft: Draft Session']);
+    const draftPath = `${org}/journal/Draft Session.md`;
+    const f = fixture([[draftPath, 'Old preparation', { org, category: 'journal', type, created: '2026-09-01T10:00' }]], [...orgAnswers, 'Session']);
     f.template('Journal'); f.template('Journal Sport');
     const script = f.load('_scripts/quickadd/journal.md');
-    await script.entry(f, { flow: type });
-    const draft = f.files.get(`${org}/journal/Draft Session.md`);
-    assert.match(draft.content, new RegExp(`type: ${type}`));
-    draft.fm = { org, category: 'journal', type, created: '2026-09-20T12:00' };
-    await script.entry(f, { flow: type });
+    await script.entry(f, { flow: type, draft: true });
     assert.ok(f.files.has(`${org}/journal/2026-09-20 12-00 Session.md`));
-    assert.ok(!f.prompts.includes('type?'));
-    assert.equal(f.prompts.filter(p => p === 'title?').length, 1);
+    assert.deepEqual(f.prompts, [...(type === 'sport' ? [] : ['org?']), 'title?']);
+    assert.equal(f.files.get(draftPath).content, 'Old preparation');
+    assert.doesNotMatch(f.files.get(`${org}/journal/2026-09-20 12-00 Session.md`).content, /## Talking Points/);
   }
 });
 
@@ -346,7 +344,7 @@ test('public QuickAdd config registers distinct Sport and Reflection commands', 
 
 test('sport capture embeds history through QuickAdd and folder-click', async () => {
   for (const mode of ['quickadd', 'templater']) {
-    const f = fixture([], mode === 'quickadd' ? ['now', 'Training'] : ['now', 'sport', 'Training']);
+    const f = fixture([], mode === 'quickadd' ? ['Training'] : ['now', 'sport', 'Training']);
     f.template('Journal Sport');
     if (mode === 'quickadd') await f.load('_scripts/quickadd/journal.md').entry(f, { flow: 'sport' });
     else {
