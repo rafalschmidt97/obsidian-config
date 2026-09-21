@@ -15,7 +15,7 @@ module.exports = Object.fromEntries(["entry", "actionPoints", "actionPointsAuto"
 }]));
 
 async function createFlows(shared) {
-const { runBackable, choose, orgFolders, ensureFolder, openFile, getFrontmatter, capitalize, notice, isArchived } = shared;
+const { runBackable, choose, orgFolders, ensureFolder, openFile, getFrontmatter, capitalize, notice, isArchived, fileLink } = shared;
 
 const IGNORED_STATUSES = new Set(["archived", "obsolete"]);
 
@@ -211,7 +211,7 @@ async function collectGroups(params, org, category, sectionName) {
 }
 
 function linkTo(file) {
-  return `[[${file.path.replace(/\.md$/, "")}|${file.basename}]]`;
+  return fileLink(file);
 }
 
 function appendGroups(lines, heading, groups, emptyText) {

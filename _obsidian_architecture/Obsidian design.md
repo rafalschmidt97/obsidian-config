@@ -11,7 +11,7 @@ Journal and Note describe content, not separate top-level storage systems.
 | Field | Meaning | Rule |
 | --- | --- | --- |
 | `org` | Personal or work namespace | Matches the active top-level org; historical orgs may live under root archive |
-| `area` | Durable context | Optional single wikilink to a `category: area` profile, preferably vault-relative |
+| `area` | Durable context | Optional single wikilink to a `category: area` profile |
 | `category` | File family/template | One value: note, journal, area, project, person, meeting, team, book, clippings, invoice, place, trip, transcript, daily, weekly, index |
 | `type` | Useful category-specific subtype | Optional except where required by a template |
 | `created` | Capture time, or occurrence time after draft activation | Datetime; preserve during moves |
@@ -113,15 +113,23 @@ merely because their metadata is old.
 An area profile contains About, Links, Tasks, and an embedded `area-content.base`.
 Its views cover All, Notes and documents, Journal, Projects, and Meetings.
 
-Content stores `area: "[[personal/areas/health/Health]]"` explicitly. The area profile
-does not link to itself. Use full paths for cross-org name collisions. One primary
+Content stores `area: "[[Health]]"` explicitly when that name is unique. The area profile
+does not link to itself. Qualify duplicate names with a readable alias. One primary
 area controls placement; ordinary links express secondary relevance.
 
-New person, meeting, project, and team relationships use `[[Name]]` when the
-profile basename is unique across the vault. Duplicate names (including archived
+All generated file relationships, including area, parent, journal, transcript,
+person, meeting, project, team, and task-source headings, share the runtime link
+formatter. Use `[[Name]]` when the basename is unique across the vault.
+Duplicate names (including archived
 notes) use `[[vault/path/Name|Name]]` so the target stays exact and the display stays
 readable. Attendees link to person profiles, never to their dated journal entries.
-Area and transcript links retain their existing vault-relative target convention.
+Inherited relationships are normalized when their targets resolve; unresolved values
+are preserved. Planned area profiles follow the same collision rule before creation.
+
+When normalizing existing content, use Obsidian's indexed links and native resolver.
+Preserve custom aliases, heading/block fragments, embed dimensions, Markdown table
+escaping, and the resolved target. Leave unresolved links and unsafe syntax unchanged;
+do not rewrite arbitrary code examples or foreign metadata as links.
 
 Project and meeting captures inherit area from the selected profile. A meeting and
 its project cannot disagree about area. People and teams span responsibilities and

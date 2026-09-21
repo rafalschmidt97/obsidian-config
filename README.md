@@ -43,7 +43,7 @@ A small frontmatter schema drives templates and views:
 | `org`      | Work/life namespace (a top-level folder)            | `work`, `personal`                      |
 | `category` | Primary note family (picks template + main view)    | `journal`, `note`, `person`, `project`  |
 | `type`     | Category-specific subtype                           | `1-1`, `meeting`, `research`, `reflection` |
-| `area`     | Ongoing context, linked to an Area profile           | `[[personal/areas/health/Health]]` |
+| `area`     | Ongoing context, linked to an Area profile           | `[[Health]]` |
 
 `area` replaces subject-based routing through `topic`. Category and type stay:
 a workout and a doctor visit both belong to Health, but remain different journal

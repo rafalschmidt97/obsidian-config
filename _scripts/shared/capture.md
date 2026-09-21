@@ -88,7 +88,10 @@ async function create(params,s,a) {
     const journals=app.vault.getMarkdownFiles().filter(f=>f.path.startsWith(selectedOrg+'/')&&a.active(f)&&s.getFrontmatter(params,f)?.category==='journal'&&!f.basename.startsWith('Draft '));
     const file=await s.choose(params,['Standalone',...journals.map(f=>f.basename)],[null,...journals],'journal?');
     const ctx={org:selectedOrg,folder:`${selectedOrg}/areas/resources/transcripts`,fields:{}};
-    if(file&&s.getFrontmatter(params,file)?.area) ctx.fields.area=s.getFrontmatter(params,file).area;
+    if(file) {
+      const area=a.context(file).fields.area;
+      if(area) ctx.fields.area=area;
+    }
     const name=file?`${file.basename} - Transcript`:`${date()} ${await s.requiredInput(params,'title?')} - Transcript`;
     const created=await write('Transcript',ctx,name,{journalLine:file?`journal: ${JSON.stringify(a.link(file))}`:''});
     if(file) await app.fileManager.processFrontMatter(file,fm=>{fm.transcript=a.link(created);});

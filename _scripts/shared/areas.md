@@ -2,15 +2,7 @@
 module.exports = { create };
 async function create(app, s) {
   const p = { app };
-  const link = file => `[[${file.path.replace(/\.md$/, '')}]]`;
-  // Profile relationships should read naturally; qualify only ambiguous basenames.
-  const profileLink = file => {
-    const key = value => value.normalize('NFC').toLowerCase();
-    const matches = app.vault.getMarkdownFiles().filter(candidate => key(candidate.basename) === key(file.basename));
-    return matches.length === 1
-      ? `[[${file.basename}]]`
-      : `[[${file.path.replace(/\.md$/, '')}|${file.basename}]]`;
-  };
+  const link = s.fileLink;
   const active = file => !s.isArchived(file.path) && !['archived','obsolete'].includes(s.getFrontmatter(p,file)?.status);
   const profiles = (org, category) => app.vault.getMarkdownFiles()
     .filter(f => f.path.startsWith(org+'/') && active(f) && s.getFrontmatter(p,f)?.category === category)
@@ -32,14 +24,18 @@ async function create(app, s) {
       if (area) result.area = area;
     }
     if (fm.team) result.team = fm.team;
+    for (const key of Object.keys(result)) {
+      const target=resolve(result[key]);
+      if(target) result[key]=link(target);
+    }
     return result;
   }
   function context(file) {
     const fm=s.getFrontmatter(p,file)||{};
     const fields=inherited(file);
     if (fm.category==='area') fields.area=link(file);
-    else if (fm.category==='person') fields.attendees=[profileLink(file)];
-    else if (['project','meeting','team'].includes(fm.category)) fields[fm.category]=profileLink(file);
+    else if (fm.category==='person') fields.attendees=[link(file)];
+    else if (['project','meeting','team'].includes(fm.category)) fields[fm.category]=link(file);
     return { org:fm.org, folder:file.parent.path, fields, profile:file, kind:fm.category };
   }
   function infer(folder) {
@@ -72,7 +68,7 @@ async function create(app, s) {
     if (app.vault.getAbstractFileByPath(folder) && s.isArchived(folder)) throw new Error('Area destination is archived.');
     const collision=app.vault.getMarkdownFiles().find(f=>f.path.toLowerCase()===path.toLowerCase());
     if(collision) throw new Error(`Area profile path already contains another note: ${path}`);
-    return {org,folder,fields:{area:`[[${path.slice(0,-3)}]]`},kind:'area',pending:{path,title}};
+    return {org,folder,fields:{area:link({path,basename:title})},kind:'area',pending:{path,title}};
   }
   async function materialize(ctx, now) {
     if(!ctx.pending) return ctx;

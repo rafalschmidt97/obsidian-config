@@ -6,6 +6,8 @@ Keep the shared modules and templates together on each device.
 ## Module boundaries
 
 - `shared/runtime.md`: vault IO, rendering, calendars, org config, archive detection.
+  Its `fileLink` formatter is shared by all generated relationships and task headings:
+  unique names use `[[Name]]`; duplicates use `[[path/Name|Name]]`.
 - `shared/areas.md`: context discovery, area creation/selection, inheritance and defaults.
 - `shared/capture.md`: content creation, triage, reassignment, archive and folder capture.
 - `shared/periodic.md`: daily, weekly, monthly and private meal-plan creation.

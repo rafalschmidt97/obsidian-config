@@ -38,6 +38,7 @@ async function create(app) {
     runBackable, choose, requiredInput, notice, wikilink, escapeYamlString, formatWikilinkList,
     journalMatchesDraft, isDraftJournal, frontmatterValueMatchesLink,
     noteRouteValues, weeklyValues, dailyValues, isArchived,
+    fileLink: file => fileLink(app, file),
   };
 }
 
@@ -87,6 +88,14 @@ function capitalize(value) { return value.charAt(0).toUpperCase() + value.slice(
 function isFolder(file) { return file && Array.isArray(file.children); }
 function getFrontmatter({ app }, file) { return app.metadataCache.getFileCache(file)?.frontmatter || null; }
 function isArchived(path) { return path.split('/').some(part => ['archive', 'archives', '.trash'].includes(part.toLowerCase())); }
+function fileLink(app, file) {
+  const name = file.basename || file.path.split('/').pop().replace(/\.md$/, '');
+  const key = value => value.normalize('NFC').toLowerCase();
+  const collisions = app.vault.getMarkdownFiles().filter(candidate =>
+    candidate.path !== file.path && key(candidate.basename) === key(name));
+  // Also supports a planned file not yet in the vault (inline Area creation).
+  return collisions.length ? `[[${file.path.replace(/\.md$/, '')}|${name}]]` : `[[${name}]]`;
+}
 function notice(message) { if (typeof Notice !== "undefined") new Notice(message); return null; }
 
 function fmtLocal(value) {

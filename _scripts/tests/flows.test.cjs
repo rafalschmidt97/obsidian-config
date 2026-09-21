@@ -95,7 +95,7 @@ test('setup creates eight profiles idempotently without changing existing conten
 test('area note and event share a folder; loose capture remains available',async()=>{
   const f=fixture([area()],['personal','Area','Health','Plan','personal','now','Area','Health','Visit','personal','Loose','Unsorted']);
   await f.run('note');await f.load('_scripts/quickadd/journal.md').entry(f);await f.run('note');
-  assert.equal(f.files.get('personal/areas/health/Plan.md').fm.area,'[[personal/areas/health/Health]]');
+  assert.equal(f.files.get('personal/areas/health/Plan.md').fm.area,'[[Health]]');
   assert.equal(f.files.get('personal/areas/health/2026-09-20 12-00 Visit.md').fm.type,'event');
   assert.ok(f.files.has('personal/areas/loose/Unsorted.md'));
 });
@@ -125,7 +125,7 @@ test('context profiles inherit area; meeting and project disagreement is rejecte
     ['work/projects/Hire/meetings/Review/Review.md','',{org:'work',category:'meeting',project:'[[work/projects/Hire/Hire]]'}]],
     ['work','now','Meeting','Review (work/projects/Hire/meetings/Review)']);
   await f.load('_scripts/quickadd/journal.md').entry(f);
-  assert.equal(f.files.get('work/projects/Hire/meetings/Review/2026-09-20 12-00 Review.md').fm.area,'[[work/areas/recruitment/Recruitment]]');
+  assert.equal(f.files.get('work/projects/Hire/meetings/Review/2026-09-20 12-00 Review.md').fm.area,'[[Recruitment]]');
   f.files.get('work/projects/Hire/meetings/Review/Review.md').fm.area='[[work/areas/health/Health]]';
   f.add(...area('work'));
   const s=await f.load('_scripts/shared/runtime.md').create(f.app);
@@ -137,7 +137,7 @@ test('folder click asks Note/Journal and infers area without invoice or attendee
     const f=fixture([area(),['personal/areas/health/Untitled.md','']],kind==='Note'?['Note','Record']:['Journal','now','Record']);
     await f.templater('personal/areas/health/Untitled.md');
     const out=f.files.get(`personal/areas/health/${kind==='Journal'?'2026-09-20 12-00 ':''}Record.md`);
-    assert.equal(out.fm.area,'[[personal/areas/health/Health]]');assert.equal(out.fm.category,kind.toLowerCase());assert.ok(!f.files.has('personal/areas/health/Untitled.md'));
+    assert.equal(out.fm.area,'[[Health]]');assert.equal(out.fm.category,kind.toLowerCase());assert.ok(!f.files.has('personal/areas/health/Untitled.md'));
   }
 });
 test('entity folder-click and explicit team creation agree',async()=>{
@@ -177,7 +177,7 @@ test('resource captures retain category and area rather than topic',async()=>{
   for(const [flow,answers,category] of [
     ['invoice',['Health','Receipt'],'invoice'],['document',['Health','Record'],'note'],['book',['Health','reading','Book'],'book'],
     ['place',['Health','entry','cafe','Cafe'],'place'],['trip',['Health','recommendation','Trip'],'trip']]) {
-    const f=fixture([area()],answers);await f.run(flow);const file=f.files.get(f.opened[0]);assert.equal(file.fm.category,category);assert.equal(file.fm.area,'[[personal/areas/health/Health]]');assert.equal(file.fm.topic,undefined);
+    const f=fixture([area()],answers);await f.run(flow);const file=f.files.get(f.opened[0]);assert.equal(file.fm.category,category);assert.equal(file.fm.area,'[[Health]]');assert.equal(file.fm.topic,undefined);
   }
 });
 test('missing runtime fails before writes; exported entry points remain synchronous',async()=>{
@@ -190,17 +190,17 @@ test('project and area-owned meeting creation preserve distinct profile shapes',
   const f=fixture([area('work','recruitment')],['work','Top level','Recruitment','Hire','work','Area','Recruitment','Review']);
   await f.run('project');await f.run('meeting');
   const project=f.files.get('work/projects/Hire/Hire.md');
-  assert.equal(project.fm.category,'project');assert.equal(project.fm.area,'[[work/areas/recruitment/Recruitment]]');
+  assert.equal(project.fm.category,'project');assert.equal(project.fm.area,'[[Recruitment]]');
   const meeting=f.files.get('work/areas/recruitment/meetings/Review/Review.md');
   assert.equal(meeting.fm.category,'meeting');assert.equal(meeting.fm.area,project.fm.area);
 });
 test('transcript inherits area and updates reciprocal links',async()=>{
   const j='work/areas/recruitment/Interview.md';
-  const f=fixture([[j,'---\norg: work\ncategory: journal\narea: "[[work/areas/recruitment/Recruitment]]"\n---\nBody']],['work','Interview']);
+  const f=fixture([area('work','recruitment'),[j,'---\norg: work\ncategory: journal\narea: "[[work/areas/recruitment/Recruitment]]"\n---\nBody']],['work','Interview']);
   await f.run('transcript');const out=f.files.get('work/areas/resources/transcripts/Interview - Transcript.md');
-  assert.equal(out.fm.journal,'[[work/areas/recruitment/Interview]]');
-  assert.equal(out.fm.area,'[[work/areas/recruitment/Recruitment]]');
-  assert.equal(f.files.get(j).fm.transcript,'[[work/areas/resources/transcripts/Interview - Transcript]]');
+  assert.equal(out.fm.journal,'[[Interview]]');
+  assert.equal(out.fm.area,'[[Recruitment]]');
+  assert.equal(f.files.get(j).fm.transcript,'[[Interview - Transcript]]');
 });
 test('date placeholder is filled in place without blank or duplicate daily notes',async()=>{
   const f=fixture([['daily/2026-09-20.md','']]);await f.templater('daily/2026-09-20.md');
@@ -224,4 +224,28 @@ test('public and private menus preserve order, stable IDs and area commands',()=
     const local=JSON.parse(fs.readFileSync(localPath,'utf8'));assert.deepEqual(local.choices.map(x=>x.id),config.choices.map(x=>x.id));
     for(const id of ['entities-menu','actions-menu'])assert.deepEqual(local.choices.find(x=>x.id===id),config.choices.find(x=>x.id===id));
   }
+});
+
+test('all generated relationships share short links, including planned areas and project parents',async()=>{
+  const f=fixture([area('work','growth'),['work/projects/Parent/Parent.md','',{org:'work',category:'project',area:'[[work/areas/growth/Growth]]'}]],['work','Parent','Child']);
+  await f.run('project');
+  const child=f.files.get('work/projects/Parent/projects/Child/Child.md');
+  assert.equal(child.fm.parent,'[[Parent]]');assert.equal(child.fm.area,'[[Growth]]');
+  const s=await f.load('_scripts/shared/runtime.md').create(f.app);
+  const a=await f.load('_scripts/shared/areas.md').create(f.app,s);
+  assert.equal(a.planned('personal','Finances').fields.area,'[[Finances]]');
+  f.add('archive/work/Finances.md','');
+  assert.equal(a.planned('personal','Finances').fields.area,'[[personal/areas/finances/Finances|Finances]]');
+});
+
+test('generated task headings use short links unless their source name is duplicated',async()=>{
+  const f=fixture([
+    ['work/areas/growth/Unique.md','## Tasks\n- [ ] Read',{org:'work',category:'journal'}],
+    ['work/projects/Shared/Shared.md','## Tasks\n- [ ] Ship',{org:'work',category:'project'}],
+    ['archive/work/Shared.md','',{org:'work',category:'project'}],
+  ],['work','tasks']);
+  await f.load('_scripts/quickadd/actionpoints.md').entry(f);
+  const text=f.files.get('work/bases/Work Tasks.md').content;
+  assert.match(text,/### \[\[Unique\]\]/);
+  assert.match(text,/### \[\[work\/projects\/Shared\/Shared\|Shared\]\]/);
 });
