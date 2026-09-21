@@ -3,6 +3,14 @@ module.exports = { create };
 async function create(app, s) {
   const p = { app };
   const link = file => `[[${file.path.replace(/\.md$/, '')}]]`;
+  // Profile relationships should read naturally; qualify only ambiguous basenames.
+  const profileLink = file => {
+    const key = value => value.normalize('NFC').toLowerCase();
+    const matches = app.vault.getMarkdownFiles().filter(candidate => key(candidate.basename) === key(file.basename));
+    return matches.length === 1
+      ? `[[${file.basename}]]`
+      : `[[${file.path.replace(/\.md$/, '')}|${file.basename}]]`;
+  };
   const active = file => !s.isArchived(file.path) && !['archived','obsolete'].includes(s.getFrontmatter(p,file)?.status);
   const profiles = (org, category) => app.vault.getMarkdownFiles()
     .filter(f => f.path.startsWith(org+'/') && active(f) && s.getFrontmatter(p,f)?.category === category)
@@ -30,8 +38,8 @@ async function create(app, s) {
     const fm=s.getFrontmatter(p,file)||{};
     const fields=inherited(file);
     if (fm.category==='area') fields.area=link(file);
-    else if (fm.category==='person') fields.attendees=[link(file)];
-    else if (['project','meeting','team'].includes(fm.category)) fields[fm.category]=link(file);
+    else if (fm.category==='person') fields.attendees=[profileLink(file)];
+    else if (['project','meeting','team'].includes(fm.category)) fields[fm.category]=profileLink(file);
     return { org:fm.org, folder:file.parent.path, fields, profile:file, kind:fm.category };
   }
   function infer(folder) {

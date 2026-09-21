@@ -117,6 +117,12 @@ Content stores `area: "[[personal/areas/health/Health]]"` explicitly. The area p
 does not link to itself. Use full paths for cross-org name collisions. One primary
 area controls placement; ordinary links express secondary relevance.
 
+New person, meeting, project, and team relationships use `[[Name]]` when the
+profile basename is unique across the vault. Duplicate names (including archived
+notes) use `[[vault/path/Name|Name]]` so the target stays exact and the display stays
+readable. Attendees link to person profiles, never to their dated journal entries.
+Area and transcript links retain their existing vault-relative target convention.
+
 Project and meeting captures inherit area from the selected profile. A meeting and
 its project cannot disagree about area. People and teams span responsibilities and
 are not automatically assigned an area merely from their identity.

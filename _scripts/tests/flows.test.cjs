@@ -64,6 +64,30 @@ function fixture(seeds=[],answers=[]) {
 }
 const area=(org='personal',slug='health')=>[`${org}/areas/${slug}/${slug[0].toUpperCase()+slug.slice(1)}.md`,'About',{org,category:'area',status:'active'}];
 
+test('meeting drafts and person occurrences use short profile links through both capture paths',async()=>{
+  for(const category of ['meeting','person']) for(const mode of ['quickadd','folder']) {
+    const name=category==='meeting'?'Planning':'Alex';
+    const folder=`work/areas/${category==='meeting'?'meetings':'people'}/${name}`;
+    const timing=category==='meeting'?'draft':'now';
+    const answers=mode==='quickadd'?['work',timing,category==='meeting'?'Meeting':'Person',`${name} (${folder})`]:[timing];
+    const f=fixture([[`${folder}/${name}.md`,'',{org:'work',category}]],answers);
+    if(mode==='quickadd')await f.load('_scripts/quickadd/journal.md').entry(f);
+    else {f.add(`${folder}/Untitled.md`);await f.templater(`${folder}/Untitled.md`);}
+    const out=f.files.get(`${folder}/${timing==='draft'?'Draft':'2026-09-20 12-00'} ${name}.md`);
+    assert.equal(category==='meeting'?out.fm.meeting:out.fm.attendees[0],`[[${name}]]`);
+  }
+});
+
+test('duplicate profile names retain an exact target with a readable alias',async()=>{
+  const f=fixture([
+    ['work/areas/people/Alex/Alex.md','',{org:'work',category:'person'}],
+    ['archive/former/areas/people/Alex/Alex.md','',{org:'former',category:'person'}],
+  ],['work','now','Person','Alex (work/areas/people/Alex)']);
+  await f.load('_scripts/quickadd/journal.md').entry(f);
+  assert.equal(f.files.get('work/areas/people/Alex/2026-09-20 12-00 Alex.md').fm.attendees[0],
+    '[[work/areas/people/Alex/Alex|Alex]]');
+});
+
 test('setup creates eight profiles idempotently without changing existing content',async()=>{
   const f=fixture();await f.run('setupAreas');const profiles=()=>[...f.files.values()].filter(x=>x.path.startsWith('personal/')&&x.fm?.category==='area');assert.equal(profiles().length,8);
   profiles()[0].content='User text';await f.run('setupAreas');assert.equal(profiles().length,8);assert.equal(profiles()[0].content,'User text');
