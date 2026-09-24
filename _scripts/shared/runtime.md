@@ -31,7 +31,7 @@ async function create(app) {
   return {
     loadModule, orgFolders, defaultOrg, sortOrgNames,
     render, stripEmptyFrontmatterLines, readVaultFile, ensureFolder, uniqueMarkdownPath,
-    openFile, renameFile, safeFilename, cleanTopic, capitalize, isFolder, getFrontmatter,
+    openFile, openFileAtHeading, renameFile, safeFilename, cleanTopic, capitalize, isFolder, getFrontmatter,
     fmtLocal, fmt: fmtLocal, fmtMonth, offsetDays, weekRange, previousMonthRange,
     startOfDay, weekdayName, parseDay, nearestContext, relationshipLines, detailsBlock,
     findProjectFolders, findTopLevelProjectFolders, findMeetingFolders, findFolders, folderNames,
@@ -81,6 +81,20 @@ async function uniqueMarkdownPath({ app }, path) {
   throw new Error(`Could not create a unique file name for ${path}.md.`);
 }
 async function openFile({ app }, file) { await app.workspace.getLeaf().openFile(file); return file; }
+async function openFileAtHeading({ app }, file, heading) {
+  const leaf = app.workspace.getLeaf();
+  await leaf.openFile(file);
+  const editor = leaf.view?.editor;
+  if (!editor) return file;
+  const content = await app.vault.cachedRead(file);
+  const headingLine = content.split("\n").findIndex(line => line.trim() === heading);
+  if (headingLine < 0) return file;
+  const cursor = { line: headingLine + 1, ch: 0 };
+  editor.setCursor(cursor);
+  editor.scrollIntoView?.({ from: cursor, to: cursor }, true);
+  editor.focus?.();
+  return file;
+}
 async function renameFile({ app }, file, path) { await app.fileManager.renameFile(file, path); }
 function safeFilename(value) { return String(value).replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim(); }
 function cleanTopic(value) { return String(value).split("/").map(safeFilename).filter(Boolean).join("/"); }

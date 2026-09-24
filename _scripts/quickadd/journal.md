@@ -36,7 +36,7 @@ function flows(params,s,a) {
     const target=await s.uniqueMarkdownPath(params,`${ctx.folder}/${stamp()} ${s.safeFilename(subject)}`);
     await app.fileManager.processFrontMatter(file,fm=>{if(fm.created) fm.drafted=fm.created; fm.created=now();});
     await app.fileManager.renameFile(file,target);
-    return s.openFile(params,file);
+    return s.openFileAtHeading(params,file,'## Notes');
   }
   async function offer(ctx,type,select) {
     const existing=drafts(ctx,type);
@@ -53,7 +53,7 @@ function flows(params,s,a) {
     const filename=draft ? `Draft ${s.safeFilename(subject)}` : `${stamp()} ${s.safeFilename(subject)}`;
     const existing=app.vault.getAbstractFileByPath(`${ctx.folder}/${filename}.md`);
     if(draft&&existing) {
-      if(matches(existing,ctx,type)) return s.openFile(params,existing);
+      if(matches(existing,ctx,type)) return s.openFileAtHeading(params,existing,'## Talking Points');
       throw new Error('That draft filename belongs to different content. Choose another title.');
     }
     const template='_templates/'+({sport:'Journal Sport','1-1':'Journal Person',meeting:'Journal Meeting',project:'Journal Project',team:'Journal Team'}[type]||'Journal')+'.md';
@@ -63,11 +63,11 @@ function flows(params,s,a) {
       org:ctx.org,created:now(),typeLine:`type: ${type}`,relationshipLines:fmLines(fields),
       history:fields.area&&type!=='sport'?'## Previous entries\n\n![[area-history.base]]':'',
       draftPlanningSection:draft?'## Talking Points\n\n- ':''
-    });
+    }).replace(/\n{3,}/g, '\n\n');
     const target=await s.uniqueMarkdownPath(params,`${ctx.folder}/${filename}`);
     await a.materialize(ctx,now()); await s.ensureFolder(params,ctx.folder);
     const file=await app.vault.create(target,content);
-    return open ? s.openFile(params,file) : file;
+    return open ? s.openFileAtHeading(params,file,draft?'## Talking Points':'## Notes') : file;
   }
   async function start(settings={}) {
     const flow=settings.flow;

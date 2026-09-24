@@ -28,3 +28,21 @@ views:
       - property: created
         direction: DESC
 ```
+
+## Notes
+
+```base
+filters:
+  and:
+    - '!file.path.split("/").contains("archive")'
+    - status != "archived"
+    - status != "obsolete"
+    - category == "note"
+    - attendees.contains(this)
+views:
+  - type: table
+    name: Entries
+    sort:
+      - property: created
+        direction: DESC
+```
