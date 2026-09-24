@@ -1,0 +1,28 @@
+/* Bound long columns without forcing short numeric columns to equal widths. */
+.markdown-rendered,
+.markdown-source-view.mod-cm6 .cm-table-widget {
+  --table-column-max-width: 36ch;
+}
+
+:is(.markdown-rendered, .markdown-source-view.mod-cm6 .cm-table-widget) table {
+  max-width: 100%;
+}
+
+/* "anywhere" lets paths and URLs shrink during automatic table sizing. */
+:is(.markdown-rendered, .markdown-source-view.mod-cm6 .cm-table-widget) :is(th, td),
+:is(.markdown-rendered, .markdown-source-view.mod-cm6 .cm-table-widget) :is(th, td) :is(code, a) {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Avoid cloned inline-code padding clipping the end of a wrapped line. */
+:is(.markdown-rendered, .markdown-source-view.mod-cm6 .cm-table-widget) :is(th, td) code {
+  box-decoration-break: slice;
+  -webkit-box-decoration-break: slice;
+}
+
+/* Live Preview uses a nested CodeMirror editor for the active cell. */
+.markdown-source-view.mod-cm6 .cm-table-widget .cm-content.cm-lineWrapping {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
