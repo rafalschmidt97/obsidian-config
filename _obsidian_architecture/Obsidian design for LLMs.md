@@ -13,6 +13,8 @@ not an alternate implementation specification.
 - legacyTopic/legacyArea preserve imported metadata; do not use them as new routing fields.
 - Personal defaults: Home, Cooking, Travel, Car, Friends, Health, Growth, Finances.
 - Sport -> Health, title only. Reflection immediate. Drafts only for event/contextual journals.
+- Documents always live in areas/resources/documents with category: document; area is
+  an optional property for area views, never a placement or a reason to create an area.
 - Respect both local areas/archive and projects/archive, plus historical root archive.
 
 ## Editing and routing

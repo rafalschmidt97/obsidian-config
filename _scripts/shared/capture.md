@@ -62,9 +62,13 @@ async function create(params,s,a) {
     const ctx=await resourceContext('personal','invoices');
     return write('Invoice',ctx,`${date()} ${await s.requiredInput(params,'title?')}`);
   }
+  // Documents stay in one filing collection; area is only a property for area views.
+  async function documentContext(selectedOrg) {
+    const ctx=await a.select(params,selectedOrg,{loose:true,create:false});
+    return {...ctx,folder:`${selectedOrg}/areas/resources/documents`};
+  }
   async function document() {
-    const ctx=await resourceContext('personal','documents');
-    return write('Note',ctx,await s.requiredInput(params,'title?'));
+    return write('Document',await documentContext('personal'),await s.requiredInput(params,'title?'));
   }
   async function place() {
     const ctx=await resourceContext('personal','places');
@@ -102,9 +106,10 @@ async function create(params,s,a) {
     if(!isInbox&&['area','person','team','project','meeting'].includes(fm.category)) throw new Error('Move the context folder, not its profile alone.');
     if(!isInbox&&(fm.project||fm.meeting||fm.team)) throw new Error('This entry belongs to a context. Reassign that context first.');
     const selectedOrg=await org();
-    const ctx=await a.route(params,selectedOrg,fm.category==='journal'?'journal':'note');
+    const ctx=!isInbox&&fm.category==='document'?await documentContext(selectedOrg):await a.route(params,selectedOrg,fm.category==='journal'?'journal':'note');
     const title=await s.requiredInput(params,'title?');
-    const target=await s.uniqueMarkdownPath(params,`${ctx.folder}/${s.safeFilename(title)}`);
+    const desired=`${ctx.folder}/${s.safeFilename(title)}`;
+    const target=`${desired}.md`===source.path?source.path:await s.uniqueMarkdownPath(params,desired);
     await a.materialize(ctx,now()); await s.ensureFolder(params,ctx.folder);
     await app.fileManager.processFrontMatter(source,meta=>{
       meta.org=selectedOrg;
@@ -113,7 +118,8 @@ async function create(params,s,a) {
       delete meta.area; delete meta.topic;
       Object.assign(meta,ctx.fields);
     });
-    await app.fileManager.renameFile(source,target); return s.openFile(params,source);
+    if(target!==source.path) await app.fileManager.renameFile(source,target);
+    return s.openFile(params,source);
   }
   async function triage() {
     const files=app.vault.getMarkdownFiles().filter(f=>a.active(f)&&s.orgFolders().includes(f.path.split('/')[0])&&f.path.split('/')[1]==='inbox'&&!['index'].includes(s.getFrontmatter(params,f)?.category)&&s.getFrontmatter(params,f)?.topic!=='indexes');

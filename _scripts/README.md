@@ -43,7 +43,8 @@ config separately, preserving private org-specific weekly shortcuts.
 
 Per org: inbox/, areas/, projects/, with local archive folders in areas and projects.
 Notes and journals coexist in contexts. Neutral resources live under areas/resources;
-loose notes under areas/loose and events under areas/journal.
+loose notes under areas/loose and events under areas/journal. Documents always stay in
+areas/resources/documents; their optional area is metadata only.
 
 Org folders drive discovery. Local orgs.json overrides orgs.example.json ordering
 and defaults. areas.json overrides areas.example.json; explicit Setup personal areas

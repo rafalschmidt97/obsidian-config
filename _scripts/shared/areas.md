@@ -80,10 +80,10 @@ async function create(app, s) {
     delete ctx.pending;
     return ctx;
   }
-  async function select(params,org,{loose=false,kind='note'}={}) {
+  async function select(params,org,{loose=false,kind='note',create=true}={}) {
     const items=profiles(org,'area').map(f=>({label:f.basename,value:context(f)}));
     if(loose) items.unshift({label:'Loose',value:{org,folder:`${org}/areas/${kind==='journal'?'journal':'loose'}`,fields:{},kind:'loose'}});
-    items.push({label:'Create area…',value:'new'});
+    if(create) items.push({label:'Create area…',value:'new'});
     const picked=await s.choose(params,items.map(x=>x.label),items.map(x=>x.value),'area?');
     return picked==='new' ? planned(org,await s.requiredInput(params,'area name?')) : picked;
   }

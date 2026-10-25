@@ -175,10 +175,19 @@ test('Open Weekly obeys canonical config and explicit overrides',async()=>{
 });
 test('resource captures retain category and area rather than topic',async()=>{
   for(const [flow,answers,category] of [
-    ['invoice',['Health','Receipt'],'invoice'],['document',['Health','Record'],'note'],['book',['Health','reading','Book'],'book'],
+    ['invoice',['Health','Receipt'],'invoice'],['document',['Health','Record'],'document'],['book',['Health','reading','Book'],'book'],
     ['place',['Health','entry','cafe','Cafe'],'place'],['trip',['Health','recommendation','Trip'],'trip']]) {
     const f=fixture([area()],answers);await f.run(flow);const file=f.files.get(f.opened[0]);assert.equal(file.fm.category,category);assert.equal(file.fm.area,'[[Health]]');assert.equal(file.fm.topic,undefined);
   }
+});
+test('documents stay in the documents collection with an optional existing area',async()=>{
+  const f=fixture([area()],['Health','Record','Loose','Scan']);await f.run('document');await f.run('document');
+  const record=f.files.get('personal/areas/resources/documents/Record.md'),scan=f.files.get('personal/areas/resources/documents/Scan.md');
+  assert.equal(record.fm.category,'document');assert.equal(record.fm.area,'[[Health]]');assert.equal(scan.fm.area,undefined);
+  const g=fixture([area()],['Create area…']);await assert.rejects(g.run('document'),/Answer Create area/);
+  const h=fixture([area(),['personal/areas/resources/documents/Old.md','---\norg: personal\ncategory: document\nlegacyTopic: documents\n---\nBody']],['personal','Health','Old']);
+  h.app.workspace.getActiveFile=()=>h.files.get('personal/areas/resources/documents/Old.md');await h.run('reassign');
+  const moved=h.files.get('personal/areas/resources/documents/Old.md');assert.equal(moved.fm.area,'[[Health]]');assert.equal(moved.fm.legacyTopic,'documents');
 });
 test('missing runtime fails before writes; exported entry points remain synchronous',async()=>{
   for(const script of ['templates.md','journal.md','actionpoints.md','Open Weekly.md']) {

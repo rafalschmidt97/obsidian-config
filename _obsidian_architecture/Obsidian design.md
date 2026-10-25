@@ -12,7 +12,7 @@ Journal and Note describe content, not separate top-level storage systems.
 | --- | --- | --- |
 | `org` | Personal or work namespace | Matches the active top-level org; historical orgs may live under root archive |
 | `area` | Durable context | Optional single wikilink to a `category: area` profile |
-| `category` | File family/template | One value: note, journal, area, project, person, meeting, team, book, clippings, invoice, place, trip, transcript, daily, weekly, index |
+| `category` | File family/template | One value: note, journal, area, project, person, meeting, team, book, clippings, invoice, document, place, trip, transcript, daily, weekly, index |
 | `type` | Useful category-specific subtype | Optional except where required by a template |
 | `created` | Capture time, or occurrence time after draft activation | Datetime; preserve during moves |
 | `drafted` | Original preparation time | Set only when activating a draft |
@@ -202,9 +202,16 @@ an incompatible existing draft is reported rather than overwritten.
 
 ### Specialized captures
 
-Book, Clipping, Place, Trip, Invoice, and Document offer selected/new Area or Loose.
+Book, Clipping, Place, Trip, and Invoice offer selected/new Area or Loose.
 Loose uses its resource collection; assigned content lives in the area. Books have
 reading status. Place uses placeKind instead of a pseudo-topic path.
+
+Documents (contracts, certificates, tax forms, scans) are a filing collection: they
+always live in `areas/resources/documents/` with `category: document`. Document offers
+an existing Area or Loose, never `Create area…`; the choice only sets `area` so the
+document shows in that Area's view. Move / reassign on a document changes its area
+and keeps it in the collection. Legacy documents (`category: note`,
+`legacyTopic: documents`) stay valid in the Documents index.
 
 Project creation selects a parent or top-level placement and optional area. Meetings
 can be loose or belong to an area, project, or team. Person and Team retain their
