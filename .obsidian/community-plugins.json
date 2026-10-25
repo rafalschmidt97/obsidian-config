@@ -1,16 +1,17 @@
 [
   "obsidian-local-rest-api",
-  "consistent-attachments-and-links",
-  "obsidian-trash-explorer",
-  "obsidian-link-embed",
-  "omnisearch",
-  "text-extractor",
-  "notebook-navigator",
-  "various-complements",
-  "simple-time-tracker",
-  "obsidian-hide-sidebars-when-narrow",
-  "templater-obsidian",
   "advanced-find-and-replace",
+  "consistent-attachments-and-links",
+  "various-complements",
+  "obsidian-trash-explorer",
+  "text-extractor",
+  "templater-obsidian",
+  "simple-time-tracker",
   "quickadd",
-  "mobile-command-icons"
+  "omnisearch",
+  "mobile-command-icons",
+  "notebook-navigator",
+  "mermaid-tools",
+  "obsidian-link-embed",
+  "heic-viewer"
 ]
