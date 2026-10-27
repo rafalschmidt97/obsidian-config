@@ -277,6 +277,7 @@ These are generated Markdown snapshots, refreshed on startup or System > Tasks.
 Edit source tasks; snapshots never write checkbox changes back. Exclude `{org}/bases/`
 from attachment-collecting plugins (Consistent Attachments and Links `excludePaths`:
 `/^[^\/]+\/bases\//`); otherwise every refresh copies each linked attachment again.
+Exclude `README.md` and `/^_/` as well, so the repo's own files are never collected.
 
 Periodic startup creates missing current daily/weekly notes, opens nothing, and
 never replaces user content. Metadata-dependent task startup waits for cache readiness.

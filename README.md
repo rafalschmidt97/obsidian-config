@@ -289,7 +289,7 @@ There is no installer. Treat it as a reference:
    for routing behavior. Configure native daily/periodic-note tooling separately.
 6. Run **System > Setup personal areas** once to create the eight defaults. The
    operation preserves existing profiles. Use
-   [`areas.example.json`](areas.example.json) as the basis for an
+   [`areas.example.json`](_scripts/config/areas.example.json) as the basis for an
    ignored `areas.json` if you want different defaults. Work areas are created as needed.
 7. Keep the shared runtime and templates available on each device. Runtime scripts
    are Markdown files for Sync; `orgs.json` and other JSON settings also need to be
