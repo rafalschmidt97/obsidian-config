@@ -1,7 +1,6 @@
 {
   "openBehavior": "",
-  "newFileLocation": "folder",
-  "newFileFolderPath": "personal/inbox",
+  "newFileLocation": "current",
   "attachmentFolderPath": "./_attachments",
   "newLinkFormat": "shortest",
   "alwaysUpdateLinks": true,

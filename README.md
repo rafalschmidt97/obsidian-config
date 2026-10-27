@@ -126,7 +126,7 @@ _scripts/                 QuickAdd + Templater automation (raw JS stored as .md)
   shared/                 Synced runtime helpers used by both entry paths
   tests/                  In-memory flow checks (local development only)
   config/                 Per-user settings (orgs, meal plan, denylist); examples ship
-  tools/                  deploy-vault.cjs: one-way framework deploy to other vaults
+  tools/                  attach-vault.sh: make an existing vault a clone of this repo
   git-hooks/              Leak guards for this public repo
 .obsidian/                Curated subset of the real Obsidian config
 categories.md             Global index-of-indexes
@@ -235,9 +235,9 @@ placement and plugin command wiring also have example files.
 ## Separate work and personal vaults
 
 I keep work notes in their own vault, with no shared sync, search index, plugin cache
-or agent endpoint. This vault stays the framework source. Other vaults get a one-way
-copy of the committed framework through `_scripts/tools/deploy-vault.cjs`, never a
-git checkout, so a work vault has nothing that can push here. A single-org vault skips
+or agent endpoint. Each vault is a clone of this repo, so I can improve the framework
+from whichever vault I am in and pull it into the other. `_scripts/tools/attach-vault.sh`
+turns an existing vault into a clone without touching its notes. A single-org vault skips
 the org prompt, and personal-only flows refuse to run where no `personal/` org exists.
 Details are in the design doc's
 [Multiple vaults](_obsidian_architecture/Obsidian%20design.md#multiple-vaults) section.

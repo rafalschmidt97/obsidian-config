@@ -58,8 +58,8 @@ link-click creation. It creates filled notes and removes only empty placeholders
 
 ## Other vaults and leak guards
 
-`tools/deploy-vault.cjs <vault> [--apply]` deploys committed framework files and plugin
-binaries one way into another vault, with a hash manifest that stops on target-side edits.
+Every vault is a clone of this repo. `tools/attach-vault.sh <vault>` converts an existing
+vault in place (sparse checkout without `personal/` where that org does not exist).
 `git-hooks/` holds the pre-commit and pre-push denylist and force-add checks; enable them with
 `git config core.hooksPath _scripts/git-hooks`. See the design doc's Multiple vaults section.
 

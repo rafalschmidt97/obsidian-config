@@ -320,19 +320,17 @@ Only eligible existing orgs are defaults. Area discovery uses profile metadata.
 ## Multiple vaults
 
 Work and personal content can live in separate vaults so they never share a sync
-target, search index, plugin cache or agent endpoint. One vault is the framework
-source: it is the git working tree of this repo. Every other vault receives a
-deployed copy and is never a repository.
+target, search index, plugin cache or agent endpoint. Every vault is a clone of
+this repo, so the framework can be improved from any of them: commit and push in one
+vault, pull in the others. Notes and other content are never tracked; the allowlist
+`.gitignore` ignores them in every vault alike.
 
-`node _scripts/tools/deploy-vault.cjs <vault>` is a dry run; `--apply` writes. It
-copies only files committed at HEAD under `_scripts/`, `_templates/`,
-`_obsidian_architecture/`, `categories.md` and a small shared `.obsidian` subset
-(snippets, appearance, types and similar non-identifying settings). It refreshes
-binaries for plugins the target enables. It never copies plugin `data.json`,
-`app.json`, hotkeys, QuickAdd or Templater settings, or `_scripts/config/*.json`;
-each vault owns those. A manifest in the target records deployed hashes. A file
-edited in the target since the last deploy stops the run; port the change to the
-source deliberately. Nothing flows back automatically.
+`_scripts/tools/attach-vault.sh <vault>` turns an existing vault into a clone without
+touching its files. A vault without a `personal/` org uses a sparse checkout that
+leaves out the `personal/` placeholder. Tracked settings are vault-neutral (new notes
+go to the current folder); per-vault settings stay in ignored files: plugin
+`data.json`, hotkeys, QuickAdd and Templater settings and `_scripts/config/*.json`.
+Do not symlink between vaults; Obsidian does not support symlinks reliably with Sync.
 
 A vault with one org skips the org prompt. Personal-only flows (Sport, Meal Plan,
 Book, Place, Trip, Invoice, Document, Setup personal areas) require a `personal/`
@@ -346,10 +344,11 @@ cross vaults; a reference to another vault's note is plain text. Each vault runs
 its own Local REST API instance on distinct ports, so agents address one vault per
 endpoint.
 
-The source repo enables `core.hooksPath=_scripts/git-hooks`. The pre-commit hook
+Every clone enables `core.hooksPath=_scripts/git-hooks`. The pre-commit hook
 rejects force-added ignored paths and denylisted terms; pre-push re-scans every
-outgoing commit. The real denylist is the ignored `_scripts/config/denylist.txt`;
-`denylist.example.txt` ships with generic patterns.
+outgoing commit. The real denylist is the ignored `_scripts/config/denylist.txt`,
+kept in each vault; `denylist.example.txt` ships with generic patterns. Framework
+changes made from a work vault must stay generic.
 
 ## Migration and verification contract
 
