@@ -179,6 +179,8 @@ Content and links:
 - **Link Embed** — Notion-style preview cards for pasted links (clippings, references).
 - **Consistent Attachments and Links** — keeps links and attachments correct when
   notes move or get renamed, which happens constantly given all the routing.
+  Exclude the generated `{org}/bases/` snapshots from it (`excludePaths`), or each
+  task refresh copies linked attachments again.
 - **Text Extractor** — OCR for images and PDFs, so screenshots and scans become
   searchable text.
 

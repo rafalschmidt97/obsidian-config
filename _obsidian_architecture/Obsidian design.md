@@ -274,7 +274,9 @@ and archived/obsolete status. Arbitrary note checkboxes are not newly collected.
 
 `#prio` adds an item to Priority and leaves it in Tasks. `#wl` moves it to Wishlist.
 These are generated Markdown snapshots, refreshed on startup or System > Tasks.
-Edit source tasks; snapshots never write checkbox changes back.
+Edit source tasks; snapshots never write checkbox changes back. Exclude `{org}/bases/`
+from attachment-collecting plugins (Consistent Attachments and Links `excludePaths`:
+`/^[^\/]+\/bases\//`); otherwise every refresh copies each linked attachment again.
 
 Periodic startup creates missing current daily/weekly notes, opens nothing, and
 never replaces user content. Metadata-dependent task startup waits for cache readiness.
