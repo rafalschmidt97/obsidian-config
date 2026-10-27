@@ -56,6 +56,13 @@ Templater uses file-pattern rules, folder-template mode disabled. Skip archive p
 and non-empty files. The unified adapter handles context inference and periodic
 link-click creation. It creates filled notes and removes only empty placeholders.
 
+## Other vaults and leak guards
+
+`tools/deploy-vault.cjs <vault> [--apply]` deploys committed framework files and plugin
+binaries one way into another vault, with a hash manifest that stops on target-side edits.
+`git-hooks/` holds the pre-commit and pre-push denylist and force-add checks; enable them with
+`git config core.hooksPath _scripts/git-hooks`. See the design doc's Multiple vaults section.
+
 ## Verification
 
 Run `node --test _scripts/tests/flows.test.cjs`. The in-memory vault exercises

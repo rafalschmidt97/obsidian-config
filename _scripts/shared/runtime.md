@@ -28,8 +28,19 @@ async function create(app) {
     if (orgs.includes(config.default)) return config.default;
     return orgs[0] || "personal";
   };
+  // A vault with a single org (e.g. a dedicated work vault) never asks which org.
+  const chooseOrg = async params => {
+    const orgs = orgFolders(params);
+    return orgs.length === 1 ? orgs[0] : await choose(params, orgs, orgs, "org?", { back: false });
+  };
+  // Personal-only flows (sport, meal plan, books, places, trips, invoices, documents, area setup)
+  // never create a personal/ org in a vault that does not have one.
+  const personalOrg = () => {
+    if (!orgFolders().includes("personal")) throw new Error("This capture needs a personal/ org, which this vault does not have.");
+    return "personal";
+  };
   return {
-    loadModule, orgFolders, defaultOrg, sortOrgNames,
+    loadModule, orgFolders, defaultOrg, chooseOrg, personalOrg, sortOrgNames,
     render, stripEmptyFrontmatterLines, readVaultFile, ensureFolder, uniqueMarkdownPath,
     openFile, openFileAtHeading, renameFile, safeFilename, cleanTopic, capitalize, isFolder, getFrontmatter,
     fmtLocal, fmt: fmtLocal, fmtMonth, offsetDays, weekRange, previousMonthRange,

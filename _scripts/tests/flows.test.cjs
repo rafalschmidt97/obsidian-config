@@ -12,7 +12,7 @@ function parse(text) {
     try{fm[m[1]]=JSON.parse(m[2]);}catch{fm[m[1]]=m[2];}
   } return fm;
 }
-function fixture(seeds=[],answers=[]) {
+function fixture(seeds=[],answers=[],orgs=['personal','work']) {
   const files=new Map(),opened=[],prompts=[];
   function folder(p) {
     if(files.has(p)) return files.get(p);
@@ -24,7 +24,7 @@ function fixture(seeds=[],answers=[]) {
     const f={path:p,name:p.split('/').pop(),basename:p.split('/').pop().replace(/\.md$/,''),parent,content,fm};
     files.set(p,f);parent.children.push(f);return f;
   }
-  folder('');folder('personal');folder('work');
+  folder('');for(const org of orgs) folder(org);
   for(const dir of ['_scripts/shared','_scripts/quickadd','_scripts/templater','_templates']) {
     for(const file of fs.readdirSync(path.join(root,dir))) if(file.endsWith('.md')) add(`${dir}/${file}`,fs.readFileSync(path.join(root,dir,file),'utf8'));
   }
@@ -257,4 +257,16 @@ test('generated task headings use short links unless their source name is duplic
   const text=f.files.get('work/bases/Work Tasks.md').content;
   assert.match(text,/### \[\[Unique\]\]/);
   assert.match(text,/### \[\[work\/projects\/Shared\/Shared\|Shared\]\]/);
+});
+test('single-org vault skips the org prompt and never creates personal/',async()=>{
+  const f=fixture([],['Loose','Plan'],['work']);await f.run('note');
+  assert.ok(f.files.has('work/areas/loose/Plan.md'));assert.ok(!f.prompts.includes('org?'));
+  await f.run('inbox');assert.ok(f.files.has('work/inbox/2026-09-20 12-00-00.md'));
+  for(const flow of ['book','invoice','document','place','trip','setupAreas','mealPlan'])await assert.rejects(f.run(flow),/personal\/ org/);
+  await assert.rejects(f.load('_scripts/quickadd/journal.md').entry(f,{flow:'sport'}),/personal\/ org/);
+  assert.ok(![...f.files.keys()].some(p=>p.startsWith('personal')));
+});
+test('inbox follows the configured default org',async()=>{
+  const f=fixture([['_scripts/config/orgs.json','{"order":["personal","work"],"default":"personal"}']]);
+  await f.run('inbox');assert.ok(f.files.has('personal/inbox/2026-09-20 12-00-00.md'));
 });

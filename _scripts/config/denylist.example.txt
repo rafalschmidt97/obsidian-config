@@ -1,0 +1,7 @@
+# Copy to denylist.txt (git-ignored) and list what must never reach this public repo:
+# employer and client names, internal domains, ticket keys, product and people names.
+# One extended regex per line, matched case-insensitively against staged and pushed changes.
+example-employer
+internal\.example\.com
+\bABC-[0-9]+\b
+-----BEGIN [A-Z ]*PRIVATE KEY-----

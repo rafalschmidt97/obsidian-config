@@ -4,7 +4,7 @@ async function create(params,s,a) {
   const {app,quickAddApi:q}=params;
   const now=()=>q.date.now('YYYY-MM-DDTHH:mm');
   const date=()=>q.date.now('YYYY-MM-DD');
-  const org=()=>s.choose(params,s.orgFolders(),s.orgFolders(),'org?',{back:false});
+  const org=()=>s.chooseOrg(params);
   const lines=fields=>Object.entries(fields).map(([k,v])=>`${k}: ${JSON.stringify(v)}`).join('\n');
   async function write(template,ctx,name,values={},open=true) {
     const content=s.render(await s.readVaultFile(params,`_templates/${template}.md`),{org:ctx.org,created:now(),relationshipLines:lines(ctx.fields),...values});
@@ -49,7 +49,7 @@ async function create(params,s,a) {
     return write(s.capitalize(kind),destination,name,{parentLine,contextLine:lines(fields),detailsBlock:selectedOrg==='personal'?'':s.detailsBlock()});
   }
   async function book() {
-    const ctx=await resourceContext('personal','books');
+    const ctx=await resourceContext(s.personalOrg(),'books');
     const status=await s.choose(params,['to-read','reading','read'],['to-read','reading','read'],'status?');
     return write('Book',ctx,await s.requiredInput(params,'title?'),{statusLine:`status: ${status}`});
   }
@@ -59,7 +59,7 @@ async function create(params,s,a) {
     return write('Clipping',ctx,await s.requiredInput(params,'title?'),{type});
   }
   async function invoice() {
-    const ctx=await resourceContext('personal','invoices');
+    const ctx=await resourceContext(s.personalOrg(),'invoices');
     return write('Invoice',ctx,`${date()} ${await s.requiredInput(params,'title?')}`);
   }
   // Documents stay in one filing collection; area is only a property for area views.
@@ -68,17 +68,17 @@ async function create(params,s,a) {
     return {...ctx,folder:`${selectedOrg}/areas/resources/documents`};
   }
   async function document() {
-    return write('Document',await documentContext('personal'),await s.requiredInput(params,'title?'));
+    return write('Document',await documentContext(s.personalOrg()),await s.requiredInput(params,'title?'));
   }
   async function place() {
-    const ctx=await resourceContext('personal','places');
+    const ctx=await resourceContext(s.personalOrg(),'places');
     const type=await s.choose(params,['entry','recommendation'],['entry','recommendation'],'type?');
     const kinds=['restaurant','bar','cafe','spot','city','country'];
     const placeKind=await s.choose(params,kinds,kinds,'place kind?');
     return write('Place',ctx,await s.requiredInput(params,'title?'),{type,placeKind});
   }
   async function trip() {
-    const ctx=await resourceContext('personal','trips');
+    const ctx=await resourceContext(s.personalOrg(),'trips');
     const type=await s.choose(params,['entry','recommendation'],['entry','recommendation'],'type?');
     let dateLines='';
     if(type==='entry') {
@@ -183,5 +183,5 @@ async function create(params,s,a) {
   }
   return {note,area,setupAreas:()=>a.setup(params),person:()=>entity('person'),meeting:()=>entity('meeting'),project:()=>entity('project'),team:()=>entity('team'),
     book,clipping,invoice,document,place,trip,transcript,triage,reassign,archive,folderCapture,
-    inbox:()=>write('Note',{org:'personal',folder:'personal/inbox',fields:{}},q.date.now('YYYY-MM-DD HH-mm-ss'),{typeLine:'type: inbox'})};
+    inbox:async()=>{const selectedOrg=await s.defaultOrg();return write('Note',{org:selectedOrg,folder:`${selectedOrg}/inbox`,fields:{}},q.date.now('YYYY-MM-DD HH-mm-ss'),{typeLine:'type: inbox'});}};
 }

@@ -1,7 +1,7 @@
 module.exports={create};
 async function create(params,s,a) {
   const {app,quickAddApi:q}=params;
-  const org=()=>s.choose(params,s.orgFolders(),s.orgFolders(),'org?',{back:false});
+  const org=()=>s.chooseOrg(params);
   async function write(template,path,values,open=true) {
     let file=app.vault.getAbstractFileByPath(path+'.md');
     if(!file || !(await app.vault.read(file)).trim()) {
@@ -36,6 +36,7 @@ async function create(params,s,a) {
       org:selectedOrg,start:r.start,end:r.end,previous:`${r.previousMonth} ${cap} Monthly Reflection`,next:`${r.nextMonth} ${cap} Monthly Reflection`});
   }
   async function mealPlan() {
+    s.personalOrg();
     let cfg={folder:'personal/areas/cooking',planName:'Cooking Schedule'};
     const file=app.vault.getAbstractFileByPath('_scripts/config/mealplan.json');
     if(file) cfg={...cfg,...JSON.parse(await app.vault.read(file))};

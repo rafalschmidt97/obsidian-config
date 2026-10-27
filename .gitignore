@@ -28,6 +28,8 @@
 /_scripts/config/areas.json
 #     Real household meal-plan placement lives here (mealplan.example.json ships instead).
 /_scripts/config/mealplan.json
+#     Real denylist for the leak-guard hooks (denylist.example.txt ships instead).
+/_scripts/config/denylist.txt
 #     The Meal Plan template hardcodes a real household project + names.
 /_templates/Meal Plan.md
 

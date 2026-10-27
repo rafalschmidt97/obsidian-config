@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# Blocks commits that would publish vault content from this public repo.
+# Enable once per clone: git config core.hooksPath _scripts/git-hooks
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+# shellcheck source=_scripts/git-hooks/lib.sh
+source _scripts/git-hooks/lib.sh
+
+status=0
+while IFS= read -r -d '' file; do
+  # Anything the allowlist .gitignore excludes got here through `git add -f`.
+  if git check-ignore --no-index -q -- "$file"; then
+    echo "pre-commit: '$file' is excluded by .gitignore (force-added?)" >&2
+    status=1
+  fi
+done < <(git diff --cached --name-only -z --diff-filter=ACMR)
+
+if ! git diff --cached --name-only --diff-filter=ACMR | scan_denylist "staged file names"; then status=1; fi
+if ! git diff --cached -U0 --diff-filter=ACMR -- . "${DENYLIST_EXCLUDE[@]}" | grep '^+' | grep -v '^+++' | scan_denylist "staged changes"; then status=1; fi
+exit "$status"

@@ -99,13 +99,14 @@ async function create(app, s) {
   async function defaultContext(params,key) {
     const cfg=await config(); const path=cfg.defaults?.[key]; const file=resolve(path);
     if(file && active(file) && s.getFrontmatter(p,file)?.category==='area') return context(file);
-    return await select(params,'personal');
+    return await select(params,s.personalOrg());
   }
   async function setup(params) {
     const cfg=await config();
     if(!Array.isArray(cfg.personal)) throw new Error('Area config personal must be a list of names.');
+    const org=s.personalOrg();
     for(const slug of cfg.personal) {
-      const ctx=planned('personal',s.capitalize(slug));
+      const ctx=planned(org,s.capitalize(slug));
       if(ctx.pending) await materialize(ctx,params.quickAddApi.date.now('YYYY-MM-DDTHH:mm'));
     }
   }

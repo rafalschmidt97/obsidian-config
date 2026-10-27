@@ -315,6 +315,40 @@ folders excluding infrastructure and archive. Config priority loads local orgs.j
 then the generic example; remaining orgs sort alphabetically with personal last.
 Only eligible existing orgs are defaults. Area discovery uses profile metadata.
 
+## Multiple vaults
+
+Work and personal content can live in separate vaults so they never share a sync
+target, search index, plugin cache or agent endpoint. One vault is the framework
+source: it is the git working tree of this repo. Every other vault receives a
+deployed copy and is never a repository.
+
+`node _scripts/tools/deploy-vault.cjs <vault>` is a dry run; `--apply` writes. It
+copies only files committed at HEAD under `_scripts/`, `_templates/`,
+`_obsidian_architecture/`, `categories.md` and a small shared `.obsidian` subset
+(snippets, appearance, types and similar non-identifying settings). It refreshes
+binaries for plugins the target enables. It never copies plugin `data.json`,
+`app.json`, hotkeys, QuickAdd or Templater settings, or `_scripts/config/*.json`;
+each vault owns those. A manifest in the target records deployed hashes. A file
+edited in the target since the last deploy stops the run; port the change to the
+source deliberately. Nothing flows back automatically.
+
+A vault with one org skips the org prompt. Personal-only flows (Sport, Meal Plan,
+Book, Place, Trip, Invoice, Document, Setup personal areas) require a `personal/`
+org and fail without creating one. Inbox uses the configured default org. Trim
+the vault's private QuickAdd menu to the flows it supports. A former-org archive
+vault keeps the org as an ordinary top-level folder so its Bases render, and
+disables startup periodic creation in its QuickAdd settings.
+
+Daily notes are per vault: each lists only the weeks of its own orgs. Links never
+cross vaults; a reference to another vault's note is plain text. Each vault runs
+its own Local REST API instance on distinct ports, so agents address one vault per
+endpoint.
+
+The source repo enables `core.hooksPath=_scripts/git-hooks`. The pre-commit hook
+rejects force-added ignored paths and denylisted terms; pre-push re-scans every
+outgoing commit. The real denylist is the ignored `_scripts/config/denylist.txt`;
+`denylist.example.txt` ships with generic patterns.
+
 ## Migration and verification contract
 
 Before bulk changes, take a full external backup and hash every file. Keep private

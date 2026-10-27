@@ -29,5 +29,7 @@ not an alternate implementation specification.
 7. Area/project tasks and draft tasks feed snapshots. Edit tasks at their source.
 8. Generic public config stays separate from ignored private org settings and notes.
 9. Run `node --test _scripts/tests/flows.test.cjs` and live-app checks for runtime changes.
-10. Before bulk migration, back up outside the vault, verify hashes, record every move,
+10. Edit the framework only in the source vault (the repo). Other vaults get it through
+    `_scripts/tools/deploy-vault.cjs`; never commit from or link across vaults.
+11. Before bulk migration, back up outside the vault, verify hashes, record every move,
     and compare post-migration links and counts. Restore Sync state when complete.

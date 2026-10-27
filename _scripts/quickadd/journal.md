@@ -13,7 +13,7 @@ function flows(params,s,a) {
   const {app,quickAddApi:q}=params;
   const now=()=>q.date.now('YYYY-MM-DDTHH:mm');
   const stamp=()=>q.date.now('YYYY-MM-DD HH-mm');
-  const org=()=>s.choose(params,s.orgFolders(),s.orgFolders(),'org?',{back:false});
+  const org=()=>s.chooseOrg(params);
   const typeFor=ctx=>({person:'1-1',meeting:'meeting',project:'project',team:'team'}[ctx.kind]||'event');
   const fmLines=fields=>Object.entries(fields).map(([k,v])=>`${k}: ${JSON.stringify(v)}`).join('\n');
   function matches(f,ctx,type) {
@@ -71,7 +71,7 @@ function flows(params,s,a) {
   }
   async function start(settings={}) {
     const flow=settings.flow;
-    const selectedOrg=settings.org || (flow==='sport'?'personal':await org());
+    const selectedOrg=settings.org || (flow==='sport'?s.personalOrg():await org());
     if(flow==='sport') {
       const ctx=await a.defaultContext(params,'sport');
       return capture(ctx,'sport',{title:await s.requiredInput(params,'title?')});

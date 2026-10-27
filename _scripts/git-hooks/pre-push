@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Re-scans every outgoing commit, so a commit made with --no-verify is still caught.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+# shellcheck source=_scripts/git-hooks/lib.sh
+source _scripts/git-hooks/lib.sh
+
+zero=0000000000000000000000000000000000000000
+status=0
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue
+  if [ "$remote_sha" = "$zero" ]; then range="$local_sha --not --remotes"; else range="$remote_sha..$local_sha"; fi
+  # shellcheck disable=SC2086
+  if ! git log -p --format='commit %H%n%s%n%b' $range -- . "${DENYLIST_EXCLUDE[@]}" | grep -v '^-' | scan_denylist "outgoing commits"; then status=1; fi
+done
+exit "$status"

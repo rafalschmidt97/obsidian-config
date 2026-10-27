@@ -125,7 +125,9 @@ _scripts/                 QuickAdd + Templater automation (raw JS stored as .md)
   templater/              Folder-click creation adapters
   shared/                 Synced runtime helpers used by both entry paths
   tests/                  In-memory flow checks (local development only)
-  config/                 Per-user settings (orgs, meal plan); *.example.json ships
+  config/                 Per-user settings (orgs, meal plan, denylist); examples ship
+  tools/                  deploy-vault.cjs: one-way framework deploy to other vaults
+  git-hooks/              Leak guards for this public repo
 .obsidian/                Curated subset of the real Obsidian config
 categories.md             Global index-of-indexes
 daily/  personal/  archive/  Empty placeholders showing the top-level layout
@@ -218,14 +220,25 @@ cp _scripts/config/orgs.example.json _scripts/config/orgs.json
 file, orgs sort alphabetically with `personal` last. With an `order` list,
 listed orgs come first; remaining orgs use that same fallback ordering.
 
-Flows that use a default, such as Open Weekly without an explicit org, select the
-configured `default` when its folder exists, otherwise the first discovered org
-(or `personal` if none exist). Other flows still ask for an org, and personal
-capture flows deliberately target `personal/`.
+Flows that use a default, such as Inbox and Open Weekly without an explicit org,
+select the configured `default` when its folder exists, otherwise the first
+discovered org (or `personal` if none exist). Other flows ask for an org unless the
+vault has only one. Personal capture flows deliberately target `personal/` and
+refuse to run in a vault without it.
 
 Templater folder rules are configured separately: update their path patterns when
 adding an org. Org settings are not the only local customization; meal-plan
 placement and plugin command wiring also have example files.
+
+## Separate work and personal vaults
+
+I keep work notes in their own vault, with no shared sync, search index, plugin cache
+or agent endpoint. This vault stays the framework source. Other vaults get a one-way
+copy of the committed framework through `_scripts/tools/deploy-vault.cjs`, never a
+git checkout, so a work vault has nothing that can push here. A single-org vault skips
+the org prompt, and personal-only flows refuse to run where no `personal/` org exists.
+Details are in the design doc's
+[Multiple vaults](_obsidian_architecture/Obsidian%20design.md#multiple-vaults) section.
 
 ## How the repo stays clean
 
@@ -240,6 +253,9 @@ architecture and config surface. That means:
 - Org and meal-plan settings, QuickAdd wiring, and hotkeys have generic example
   files; the real configs are excluded. The household-specific Meal Plan template
   is also excluded and has no public replacement.
+
+- Git hooks (`core.hooksPath=_scripts/git-hooks`) block force-added ignored files and
+  any staged or pushed change that matches a private denylist of names and domains.
 
 To audit exactly what is public, clone the repo and run `git ls-files`.
 
